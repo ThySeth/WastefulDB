@@ -17,6 +17,8 @@ const db = new Wasteful();
   
   db.find();
   
+  db.search();
+  
   db.delete();
 */
 
@@ -25,6 +27,10 @@ db.insert({id: "Xv5312", name: "Seth R.", dob: "3/20/**"}); // ALWAYS include {i
 db.find({id: "Xv5312"}, (res) => {
   console.log(`${res.name}\n${res.id}\n`)
 });
+
+db.search("Xv5312", async(result) => {
+  console.log(await result);
+})
 
 db.delete({id: "Xv5312});
 ```
