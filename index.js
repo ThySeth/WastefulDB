@@ -1,5 +1,7 @@
+const { CallTracker } = require('assert');
 const fs = require('fs');
 const { resolve } = require('path');
+const { callbackify } = require('util');
 const fsPromises = require('fs').promises;
 
 let object = {
@@ -30,6 +32,26 @@ module.exports = class WastefulDB {
     })
   }
 
+  search(data, caller) { // search("SessionToken", (res) => { console.log(res) });
+    fs.readdir("./data/", (err, file) => {
+     if(err) throw err;
+       file.forEach(foo => {
+         fs.readFile(`./data/${foo}`, (error, barr) => {
+           if(error) throw error;
+           let obj = JSON.parse(barr); 
+           obj = obj.table[0];
+
+           if(obj == undefined || null) return;
+
+           if(obj.id == data) {
+             caller(obj);
+             return;
+           }
+         })
+       })
+    })
+  }
+
   delete(data) {
    fs.rm(`./data/${data.id}.json`, (err) => {
     if(err) throw err;
@@ -37,3 +59,5 @@ module.exports = class WastefulDB {
   }
   
 }
+
+module.exports.wastefuldb
