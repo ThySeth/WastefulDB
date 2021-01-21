@@ -8,7 +8,7 @@ update(queries) { // update({id: "001", element: "money", change: -10})
        data = JSON.parse(data); data = data.table[0];
             console.log(data);
             foo.push(data);
-        update = foo.indexOf(queries.element);
+        update = foo.indexOf(foo[queries.element]);
             console.log(update);
         if(queries.math == true) {
          data[update] = data[update] + queries.element
