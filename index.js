@@ -8,9 +8,12 @@ let object = {
   table: []
 }
 
-let foo;
+let foo = [];
 
 module.exports = class WastefulDB {
+ constructor(feedback = false) {
+   this.feedback = feedback;
+ }
   insert(data) {
    object.table.push(data); // .insert({id: "001", name: "Seth", dob: "3/20/**, money: 25"});
    try {
@@ -18,6 +21,9 @@ module.exports = class WastefulDB {
     fs.writeFile(`./data/${data.id}.json`, jsonify, (err) => {
         if(err) throw err;
     });
+     if(this.feedback == true) {
+       console.log("Inserted 1 document.");
+     }
    }
    catch(err) {
     console.log("ERR:\n" + err);
@@ -55,6 +61,9 @@ module.exports = class WastefulDB {
   delete(data) {
    fs.rm(`./data/${data.id}.json`, (err) => {
     if(err) throw err;
+    if(this.feedback == true) {
+      console.log("Removed 1 document.");
+    }
    });
   }
   
