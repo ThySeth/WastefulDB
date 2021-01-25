@@ -4,7 +4,8 @@
       "id": "qM26c",
       "name": "Nick",
       "age": 21,
-      "money": 29
+      "money": 29,
+      "example": true
     }
   ]
 }
