@@ -6,8 +6,8 @@ A little custom made, document-oriented database project made with JavaScript an
 ```js
 // File named "data" must be created prior to running. It will be more spacious in the main file
 
-const Wasteful = require('./index.js');
-const db = new Wasteful();
+const Wasteful = require('wastefuldb');
+const db = new Wasteful(true); // Boolean set to true to receive feedback from functions such as .insert(); Default: false
 ```
 
 ### Features
