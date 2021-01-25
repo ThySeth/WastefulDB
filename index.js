@@ -18,7 +18,7 @@ module.exports = class WastefulDB {
    object.table.push(data); // .insert({id: "001", name: "Seth", dob: "3/20/**, money: 25"});
    try {
     let jsonify = JSON.stringify(object, null, 2);
-    fs.writeFile(`./data/${data.id}.json`, jsonify, (err) => {
+    fs.writeFile(`./node_modules/wastefuldb/data/${data.id}.json`, jsonify, (err) => {
         if(err) throw err;
     });
      if(this.feedback == true) {
@@ -31,7 +31,7 @@ module.exports = class WastefulDB {
   }
   
   find(data, cb) { // .find({id: "1"});
-    fs.readFile(`./data/${data.id}.json`, async(err, foo) => {
+    fs.readFile(`./node_modules/wastefuldb/data/${data.id}.json`, async(err, foo) => {
       if(err) throw err;
        let obj = JSON.parse(await foo);
         cb(obj.table[0]);
@@ -39,10 +39,10 @@ module.exports = class WastefulDB {
   }
 
   search(data, caller) { // search("SessionToken", (res) => { console.log(res) });
-    fs.readdir("./data/", (err, file) => {
+    fs.readdir("./node_modules/wastefuldb/data/", (err, file) => {
      if(err) throw err;
        file.forEach(foo => {
-         fs.readFile(`./data/${foo}`, (error, barr) => {
+         fs.readFile(`./node_modules/wastefuldb/data/${foo}`, (error, barr) => {
            if(error) throw error;
            let obj = JSON.parse(barr); 
            obj = obj.table[0];
@@ -59,7 +59,7 @@ module.exports = class WastefulDB {
   }
 
   delete(data) {
-   fs.rm(`./data/${data.id}.json`, (err) => {
+   fs.rm(`./node_modules/wastefuldb/data/${data.id}.json`, (err) => {
     if(err) throw err;
     if(this.feedback == true) {
       console.log("Removed 1 document.");
