@@ -2,8 +2,8 @@ let object = {
   table: []
 }
 
-update(foo) { // foo.id, foo.element, foo.change, foo.math
-  let element = foo.element; let change = foo.change;
+update(foo) { // update({id: "Xv5312", element: "name", change: "Neil", math: false});
+  let element = foo.element; let change = foo.change; foo.math = foo.math || true;
    if(!(foo.id || element || change)) return console.error("One or more variables missing."); if(math != true || false) return console.error("Variable 'math' is boolean only.");
     
     fs.readFile(`./node_modules/wastefuldb/data/${foo.id}.json`, (err, data) => {
@@ -29,6 +29,8 @@ update(foo) { // foo.id, foo.element, foo.change, foo.math
     })
     
 }
+
+
 
 /*
 // Adapted from:
@@ -67,3 +69,44 @@ console.log(bar[element]);
 
 edit("name", "Leo");
 */
+
+
+searchUpdate(id, element, change, math = true) { // searchUpdate("Xv5312", "name", "Nial", false);
+   if(!(id || element || change)) return console.error("One or more variables missing."); if(math != true || false) return console.error("Variable 'math' is boolean only.");
+    
+    fs.readdir(`./node_modules/wastefuldb/data/`, (err, file) => {
+      if(err) throw err;  
+       file.forEach(foo => {
+        fs.readFile(`./node_modules/wastefuldb/data/${file}`, (error, bar) => {
+         if(error) throw error;
+          let res = JSON.parse(bar); res = res.table[0];
+            if(res == null || undefined) return;
+            
+            if(res.id == id) {
+              
+              if(math == true) {
+               if(isNaN(res[element]) || change) return console.error("Variable 'element' or 'change' returned NaN.");
+               let num = res[element];
+                res[element] = num + change;
+              } else {
+               res[element] = change;   
+              }
+                
+                object.table.push(res);
+                 let jsonified = JSON.stringify(res);
+                  fs.writeFile(`./node_modules/wastefuldb/data/${file}`, (anotherError) => {
+                   if(anotherError) throw anotherError;
+                    if(this.feedback == true) {
+                     console.log("Found and updated 1 document.");   
+                    }
+                  })
+                
+            } else {
+              if(this.feedback == true) {
+               console.log("No documents were found.");   
+              }
+            }
+       })
+    })
+    
+}
