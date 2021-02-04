@@ -8,8 +8,6 @@ let object = {
   table: []
 }
 
-let foo = [];
-
 module.exports = class WastefulDB {
  constructor(feedback = false) {
    this.feedback = feedback;
