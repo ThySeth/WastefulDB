@@ -8,6 +8,8 @@ let object = {
   table: []
 }
 
+let foo = [];
+
 module.exports = class WastefulDB {
  constructor(feedback = false) {
    this.feedback = feedback;
@@ -55,7 +57,7 @@ module.exports = class WastefulDB {
        })
     })
   }
-  
+
   update(foo) { // update({id: "Xv5312", element: "name", change: "Neil", math: false});
   let element = foo.element; let change = foo.change; let math = foo.math;
    if(!(foo.id || element || change)) return console.error("One or more variables missing."); if(math != true || false) { math = false }
@@ -79,6 +81,46 @@ module.exports = class WastefulDB {
            if(this.feedback == true) {
             console.log("Updated 1 document.");   
            }
+       })
+    })
+    
+  }
+
+  searchUpdate(foo) { 
+  let element = foo.element; let change = foo.change; let math = foo.math;
+   if(!(foo.id || element || change)) return console.error("One or more variables missing."); if(math != true || false) { math = false }
+    
+    fs.readdir(`./node_modules/wastefuldb/data/`, (err, file) => {
+      if(err) throw err;
+
+       file.forEach(res => {
+        fs.readFile(`./node_modules/wastefuldb/data/${res}`, (error, bar) => {
+          if(error) throw error;
+           let data = JSON.parse(bar); data = data.table[0];
+            if(data.id != foo.id || !data) return;
+
+            if(data.id == foo.id) {
+             if(math == true) {
+              if(isNaN(data[element] || change)) return console.error("Variable 'element' or 'change' returned NaN.");
+
+              let num = parseInt(data[element]);
+               data[element] = num + (parseInt(change));
+             } else {
+              data[element] = change;
+             }
+
+             object.table.push(data);
+              let jsoned = JSON.stringify(object);
+            fs.writeFile(`./node_modules/wastefuldb/data/${res}`, jsoned, (anotherError) => {
+              if(anotherError) throw anotherError;
+               if(this.feedback == true) {
+                 console.log("Found and updated 1 document.");
+               }
+            })
+
+            }
+        })
+
        })
     })
     
