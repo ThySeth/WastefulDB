@@ -57,6 +57,34 @@ module.exports = class WastefulDB {
        })
     })
   }
+  
+  update(foo) { // update({id: "Xv5312", element: "name", change: "Neil", math: false});
+  let element = foo.element; let change = foo.change; let math = foo.math;
+   if(!(foo.id || element || change)) return console.error("One or more variables missing."); if(math != true || false) { math = false }
+    
+    fs.readFile(`./node_modules/wastefuldb/data/${foo.id}.json`, (err, data) => {
+     if(err) throw err;
+      data = JSON.parse(data); data = data.table[0];
+       
+       if(math == true) {
+        if(isNaN(data[element] || change)) return console.error("Variable 'element' or 'change' returned NaN.");
+          let num = parseInt(data[element]);
+        data[element] = num + (parseInt(change));
+       } else {
+        data[element] = change;
+       }
+        
+       object.table.push(data);
+        let jsoned = JSON.stringify(object);
+       fs.writeFile(`./node_modules/wastefuldb/data/${foo.id}.json`, jsoned, (error) => {
+          if(error) throw error;
+           if(this.feedback == true) {
+            console.log("Updated 1 document.");   
+           }
+       })
+    })
+    
+  }
 
   delete(data) {
    fs.rm(`./node_modules/wastefuldb/data/${data.id}.json`, (err) => {
