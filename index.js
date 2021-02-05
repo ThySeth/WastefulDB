@@ -8,8 +8,6 @@ let object = {
   table: []
 }
 
-let foo = [];
-
 module.exports = class WastefulDB {
  constructor(feedback = false) {
    this.feedback = feedback;
@@ -19,7 +17,7 @@ module.exports = class WastefulDB {
    try {
     let jsonify = JSON.stringify(object, null, 2);
     fs.writeFile(`./node_modules/wastefuldb/data/${data.id}.json`, jsonify, (err) => {
-        if(err) throw err;
+        if(err) return err;
     });
      if(this.feedback == true) {
        console.log("Inserted 1 document.");
@@ -32,7 +30,8 @@ module.exports = class WastefulDB {
   
   find(data, cb) { // .find({id: "1"});
     fs.readFile(`./node_modules/wastefuldb/data/${data.id}.json`, async(err, foo) => {
-      if(err) throw err;
+     if(!foo) return cb(null);
+      if(err) return err;
        let obj = JSON.parse(await foo);
         cb(obj.table[0]);
     })
@@ -40,10 +39,10 @@ module.exports = class WastefulDB {
 
   search(data, caller) { // search("SessionToken", (res) => { console.log(res) });
     fs.readdir("./node_modules/wastefuldb/data/", (err, file) => {
-     if(err) throw err;
+     if(err) return err;
        file.forEach(foo => {
          fs.readFile(`./node_modules/wastefuldb/data/${foo}`, (error, barr) => {
-           if(error) throw error;
+           if(error) return error;
            let obj = JSON.parse(barr); 
            obj = obj.table[0];
 
@@ -59,17 +58,18 @@ module.exports = class WastefulDB {
   }
 
   update(foo) { // update({id: "Xv5312", element: "name", change: "Neil", math: false});
-  let element = foo.element; let change = foo.change; let math = foo.math;
-   if(!(foo.id || element || change)) return console.error("One or more variables missing."); if(math != true || false) { math = false }
+  let element = foo.element; let change = foo.change; foo.math = foo.math || true; let math = foo.math;
+   if(!(foo.id || element || change)) return console.error("One or more variables missing."); if(math != true || false) return console.error("Variable 'math' is boolean only.");
     
     fs.readFile(`./node_modules/wastefuldb/data/${foo.id}.json`, (err, data) => {
-     if(err) throw err;
+    if(!data) return console.error(`Nothing was found for: ` + foo.id);
+     if(err) return err;
       data = JSON.parse(data); data = data.table[0];
        
        if(math == true) {
         if(isNaN(data[element] || change)) return console.error("Variable 'element' or 'change' returned NaN.");
-          let num = parseInt(data[element]);
-        data[element] = num + (parseInt(change));
+          let num = data[element];
+        data[element] = num + change;
        } else {
         data[element] = change;
        }
@@ -77,25 +77,25 @@ module.exports = class WastefulDB {
        object.table.push(data);
         let jsoned = JSON.stringify(object);
        fs.writeFile(`./node_modules/wastefuldb/data/${foo.id}.json`, jsoned, (error) => {
-          if(error) throw error;
+          if(error) return error;
            if(this.feedback == true) {
             console.log("Updated 1 document.");   
            }
        })
     })
     
-  }
+}
 
-  searchUpdate(foo) { 
+searchUpdate(foo) { 
   let element = foo.element; let change = foo.change; let math = foo.math;
    if(!(foo.id || element || change)) return console.error("One or more variables missing."); if(math != true || false) { math = false }
     
     fs.readdir(`./node_modules/wastefuldb/data/`, (err, file) => {
-      if(err) throw err;
+      if(err) return err;
 
        file.forEach(res => {
         fs.readFile(`./node_modules/wastefuldb/data/${res}`, (error, bar) => {
-          if(error) throw error;
+          if(error) return error;
            let data = JSON.parse(bar); data = data.table[0];
             if(data.id != foo.id || !data) return;
 
@@ -112,7 +112,7 @@ module.exports = class WastefulDB {
              object.table.push(data);
               let jsoned = JSON.stringify(object);
             fs.writeFile(`./node_modules/wastefuldb/data/${res}`, jsoned, (anotherError) => {
-              if(anotherError) throw anotherError;
+              if(anotherError) return anotherError;
                if(this.feedback == true) {
                  console.log("Found and updated 1 document.");
                }
@@ -128,7 +128,7 @@ module.exports = class WastefulDB {
 
   delete(data) {
    fs.rm(`./node_modules/wastefuldb/data/${data.id}.json`, (err) => {
-    if(err) throw err;
+    if(err) return err;
     if(this.feedback == true) {
       console.log("Removed 1 document.");
     }
