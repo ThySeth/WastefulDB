@@ -52,7 +52,10 @@ db.insert({id: "Jk53c", name: "Richard", age: 53});
 ___
 
 ```js
-db.find({id: "Jk53c"}, (res) => {  console.log(res) });
+db.find({id: "Jk53c"}, (res) => {  
+ if(!res) return;
+  console.log(res) 
+});
 ```
 * id - The name/identifier of the file to look for which is set when using the .insert() function
 
