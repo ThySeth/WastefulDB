@@ -15,6 +15,8 @@ const db = new Wasteful(true); // Boolean set to true to receive feedback from f
 /*
   db.insert();
   
+  db.insertMult();
+  
   db.find();
   
   db.search();
@@ -27,6 +29,8 @@ const db = new Wasteful(true); // Boolean set to true to receive feedback from f
 */
 
 db.insert({id: "Xv5312", name: "Seth R.", dob: "3/20/**"}); // ALWAYS include {id: "String/Number"} as the files are orgainzed by identifiers
+
+db.insertMult({id: "BrMc2", name: "Mick"}, {bal: 100, purchases: 0}, {inv: 0});
 
 db.find({id: "Xv5312"}, (res) => {
   console.log(`${res.name}\n${res.id}\n`)
@@ -48,6 +52,13 @@ db.delete({id: "Xv5312});
 db.insert({id: "Jk53c", name: "Richard", age: 53});
 ```
 * id - The name of the file and what will be used in the .find() function
+
+___
+
+```js
+db.insertMult(x, y, z);
+```
+* x, y, z - Enter more than one collection in one file (`max 3`) with the same format to .insert() (an "id" is required in one of the three collection)
 
 ___
 
