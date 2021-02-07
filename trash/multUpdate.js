@@ -1,6 +1,6 @@
 update(foo) { // update({id: "Xv5312", element: "name", change: "Neil", math: false});
-  let element = foo.element; let change = foo.change; foo.math = foo.math || true; let math = foo.math;
-   if(!(foo.id || element || change)) return console.error("One or more variables missing."); if(math != true || false) return console.error("Variable 'math' is boolean only.");
+  let element = foo.element; let change = foo.change; let math = foo.math;
+   if(!(foo.id || element || change)) return console.error("One or more variables missing."); if(math != true || false) { math = false }
     
     fs.readFile(`./node_modules/wastefuldb/data/${foo.id}.json`, (err, data) => {
     if(!data) return console.error(`Nothing was found for: ` + foo.id);
@@ -20,14 +20,17 @@ update(foo) { // update({id: "Xv5312", element: "name", change: "Neil", math: fa
 
            if(math == true) {
             if(isNaN(jeff[element] || change)) return console.error("Variable 'element' or 'change' returned NaN.");
-             jeff[element] = jeff[element] + change;
+            let number = jeff[element];
+             jeff[element] = number + change;
            } else {
              jeff[element] = change;
            }
           }
         }// END for-loop
-
-        object.table.push(newton);
+        
+        for(let x = 0; x < (Object.keys(data.table)).length; x++) {
+          object.table.push(data.table[x]);
+        }
          let jsonified = JSON.stringify(object);
         fs.writeFile(`./node_modules/wastefuldb/data/${foo.id}.json`, jsonified, (error) => {
           if(error) return error;
