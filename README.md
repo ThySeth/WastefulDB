@@ -7,7 +7,7 @@ A little custom made, document-oriented database project made with JavaScript an
 // File named "data" must be created prior to running. It will be more spacious in the main file
 
 const Wasteful = require('wastefuldb');
-const db = new Wasteful(true); // Boolean set to true to receive feedback from functions such as .insert(); Default: false
+const db = new Wasteful({feedback: true, serial: false}); // Boolean set to true to receive feedback from functions such as .insert(); Default: false
 ```
 
 ### Features
@@ -42,12 +42,18 @@ db.search("Xv5312", async(result) => {
 
 db.update({id: "Xv5312", element: "age", change: -1, math: true});
 
-db.searchUpdate({id: "Xv5312", element: "name", change: "Miles"});
-
-db.delete({id: "Xv5312});
+db.delete({id: "Xv5312"});
 ```
 
 ### In Depth
+```js
+new Wasteful({feedback: true, serial: false});
+```
+* feedback - Should a notification be printed to the command prompt when an action is performed?
+* serial - Should file identifiers (aka names) be set based on files in directory? (Allows for the exclusion of {id: yadayada})
+
+___
+
 ```js
 db.insert({id: "Jk53c", name: "Richard", age: 53});
 ```
@@ -80,17 +86,9 @@ db.search({id: "Richard"}, async(res) => { console.log(await res) });
 ___
 
 ```js
-db.update({id: "Jk53c", element: "id", change: "Richard"});
+db.update({id: "Jk53c", element: "id", change: "Richard", math: false});
 ```
-* id - The name of the file to update
+* id - The name of the file to update or its in-file identifier
 * element - What element of the file you want to update
 * change - What change you want to make to it
-
-___
-
-```js
-db.searchUpdate({id: "Richard", element: "id", change: "Jk53c"});
-```
-* id - Searches for the file similarly to db.search();
-* element - What element of the file you want to update
-* change - What change you want to make to it
+* math - Does the change require (simple) math?
