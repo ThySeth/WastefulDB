@@ -1,0 +1,14 @@
+{
+    "table": [
+      {
+        "user":"Nea"
+      },
+      {
+        "bal": 60,
+        "purchases": 5
+      },
+      {
+        "inv": 3
+      }
+    ]
+  }
