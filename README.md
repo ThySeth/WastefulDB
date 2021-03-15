@@ -22,6 +22,8 @@ const db = new Wasteful({feedback: true, serial: false}); // Boolean set to true
   db.search();
   
   db.update();
+
+  db.check();
     
   db.delete();
 */
@@ -40,7 +42,11 @@ db.search("Xv5312", async(result) => {
 
 db.update({id: "Xv5312", element: "age", change: -1, math: true});
 
+db.check("BrMc2");
+db.check({id: "BrMc2"});
+
 db.delete({id: "Xv5312"});
+db.delete("Xv5312");
 ```
 
 ### In Depth
@@ -90,3 +96,5 @@ db.update({id: "Jk53c", element: "id", change: "Richard", math: false});
 * element - What element of the file you want to update
 * change - What change you want to make to it
 * math - Does the change require (simple) math?
+
+___
