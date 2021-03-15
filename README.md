@@ -22,9 +22,7 @@ const db = new Wasteful({feedback: true, serial: false}); // Boolean set to true
   db.search();
   
   db.update();
-  
-  db.searchUpdate();
-  
+    
   db.delete();
 */
 
