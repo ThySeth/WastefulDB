@@ -257,4 +257,11 @@ module.exports = class WastefulDB {
 
 }
 
+function dirSize(dir, callback) {
+    fs.readdir(dir, (err, files) => {
+        if(err) return err;
+         return callback(files.length);
+    })
+}
+
 module.exports.wastefuldb;
