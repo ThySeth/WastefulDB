@@ -5,7 +5,7 @@ let object = {
 }
 
 module.exports = class WastefulDB {
-    constructor(options) {
+    constructor(options = {}) {
         this.feedback = options.feedback || false;
         this.serial = options.serial || false;
     }
