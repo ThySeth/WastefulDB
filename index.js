@@ -245,6 +245,15 @@ module.exports = class WastefulDB {
         })
     }
 
+    check(data) {
+        let chk = fs.existsSync(`./node_modules/wastefuldb/data/${data.id || data}.json`);
+         if(chk) {
+             return true;
+         } else {
+             return false;
+         }
+    }
+
     delete(data) {
         fs.rm(`./node_modules/wastefuldb/data/${data.id || data}.json`, (err) => {
             if(err) return err;
