@@ -160,7 +160,6 @@ module.exports = class WastefulDB {
 
                                      for(let i = 0; i < (Object.keys(deets.table)).length; i++) {
                                         jeff = newton[i];
-
                                         if(!jeff[element]) {
                                             continue;
                                         } else {
@@ -243,6 +242,16 @@ module.exports = class WastefulDB {
 
 
         })
+    }
+
+    size() {
+        try {
+        let files = fs.readdirSync(`./node_modules/wastefuldb/data/`);
+         return files.length;
+        }
+        catch(err) {
+            return err;
+        }
     }
 
     check(data) {
