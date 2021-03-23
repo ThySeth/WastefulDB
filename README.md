@@ -23,6 +23,8 @@ const db = new Wasteful({feedback: true, serial: false}); // Boolean set to true
   
   db.update();
 
+  db.size();
+
   db.check();
     
   db.delete();
@@ -41,6 +43,8 @@ db.search("Xv5312", async(result) => {
 })
 
 db.update({id: "Xv5312", element: "age", change: -1, math: true});
+
+db.size();
 
 db.check("BrMc2");
 db.check({id: "BrMc2"});
