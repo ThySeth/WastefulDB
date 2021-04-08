@@ -4,10 +4,10 @@ A little custom made, document-oriented database project made with JavaScript an
 
 ### Setup
 ```js
+// Using NodeJS v15.14.0
+
 const Wasteful = require('wastefuldb');
 const db = new Wasteful({feedback: true, serial: false}); // Boolean set to true to receive feedback from functions such as .insert(); Default: false
-
-// NodeJS v15.14.0
 ```
 
 ### Features
@@ -96,7 +96,7 @@ ___
 ```js
 db.update({id: "Jk53c", element: "id", change: "Richard", math: false});
 ```
-* id - The name of the file to update or its in-file identifier
+* id - The name of the file to update
 * element - What element of the file you want to update
 * change - What change you want to make to it
 * math - Does the change require (simple) math?
