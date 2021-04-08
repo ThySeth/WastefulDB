@@ -4,10 +4,10 @@ A little custom made, document-oriented database project made with JavaScript an
 
 ### Setup
 ```js
-// File named "data" must be created prior to running. It will be more spacious in the main file
-
 const Wasteful = require('wastefuldb');
 const db = new Wasteful({feedback: true, serial: false}); // Boolean set to true to receive feedback from functions such as .insert(); Default: false
+
+// NodeJS v15.14.0
 ```
 
 ### Features
