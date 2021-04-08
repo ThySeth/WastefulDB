@@ -138,112 +138,70 @@ module.exports = class WastefulDB {
         })
     }
 
-    update(data) {
-        let element = data.element; let change = data.change; let math = data.math;
-         if(!(data.id || element || change)) return console.error("Missing variable(s) while updating.");
-         
-  
-          fs.readFile(`./node_modules/wastefuldb/data/${data.id}.json`, (_err, data) => {
-           if(_err) return _err;
-              if(!data) { // Begin searchUpdate function
-  
-                  fs.readdir(`./node_modules/wastefuldb/data/`, (err, files) => {
-                      if(err) return err;
-                       files.forEach(res => {
-                           fs.readFile(`./node_modules/wastefuldb/data/${res}`, (error, details) => {
-                               if(error) return error;
-                               let deets = JSON.parse(details);
-                                if(deets.hasOwnProperty(data.id)) {
-                                   let newton, jeff;
-  
-                                   if((Object.keys(deets.table)).length > 1) {
-                                      newton = deets.table;
-  
-                                       for(let i = 0; i < (Object.keys(deets.table)).length; i++) {
-                                          jeff = newton[i];
-                                          if(!jeff[element]) {
-                                              continue;
-                                          } else {
-                                              if(math == true) {
-                                                  if(isNaN(jeff[element] || change)) return console.error("Variable 'element' or 'change' is NaN.");
-                                                  let number = jeff[element];
-                                                   jeff[element] = number + change;
-                                              } else {
-                                                  jeff[element] = change;
-                                              }
-  
-                                          }
-                                       } // end for()
-  
-                                       for(let x = 0; x < (Object.keys(deets.table)).length; x++) {
-                                           object.table.push(deets.table[x]);
-                                       }
-                                       let jsoned = JSON.stringify(object);
-                                        fs.writeFile(`./node_modules/wastefuldb/data/${data.id}.json`, jsoned, (someErr) => {
-                                            if(someErr) return someErr;
-                                             if(this.feedback == true) {
-                                                 console.log("Updated 1 document.");
-                                             }
-                                        })
-  
-                                   } else {
-  
-                                      deets = data.table[0];
-  
-                                      if(math == true) {
-                                          if(isNaN(deets[element] || change)) return console.error("Variable 'element' or 'change' is NaN.");
-                                           let num = deets[element];
-                                            deets[element] = num + change;
-                                      } else {
-                                          deets[element] = change;
-                                      }
-  
-                                      object.table.push(deets);
-                                       let jsonify = JSON.stringify(object);
-                                       fs.writeFile(`./node_modules/wastefuldb/data/${data.id}`, jsonify, (e) => {
-                                           if(e) return e;
-                                            if(this.feedback == true) {
-                                                console.log("Updated 1 document");
-                                            }
-                                       })
-  
-                                   }
-  
-                                } 
-  
-                           })
-                       })
-                  })
-  
-              } else { // Regular update function
-  
-                  data = JSON.parse(data);
-                  let nick, jake;
-                   nick = data.table[0];
-  
-                   if(math == true) {
-                       if(isNaN(nick[element] || change)) return console.error("Variable 'element' or 'change' is NaN.");
-                        let num = nick[element];
-                         nick[element] = num + change;
-                   } else {
-                       nick[element] = change;
-                   }
-  
-                   object.table.push(nick);
-                    let jsoned = JSON.stringify(object);
-  
-                  fs.writeFile(`./node_modules/wastefuldb/data/${nick.id}.json`, jsoned, (errors) => {
-                      if(errors) return errors;
+
+    update(data = {id, element, change, math: false}) {
+        const id = data.id; const element = data.element; const change = data.change; const math = data.math;
+        /// pre-defined variables
+        let parsed;
+        let temp; let temp2;
+        ///
+         if(fs.existsSync(`./node_modules/wastefuldb/data/${id}.json`) == true) { 
+            fs.readFile(`./node_modules/wastefuldb/data/${id}.json`, (err, file) => {
+             if(err) return err;
+              parsed = JSON.parse(file);
+                //// multiple
+                if((Object.keys(parsed.table)).length > 1) {
+                 temp = parsed.table;
+                 for(let i = 0; i < (Object.keys(parsed.table)).length; i++) {
+                    temp2 = temp[i];
+                    if(!temp2[element]) {
+                        continue;
+                    } else {
+                        if(math == true) {
+                            if(isNaN(temp2[element] || change)) return console.error("Variable 'element' or 'change' is NaN.");
+                            let number = temp2[element];
+                            temp2[element] = number + change;
+                        } else {
+                            temp2[element] = change;
+                        }
+
+                    }
+                 } // end for()
+
+                 for(let x = 0; x < (Object.keys(parsed.table)).length; x++) {
+                     object.table.push(parsed.table[x]);
+                 }
+                 let jsoned = JSON.stringify(object);
+                  fs.writeFile(`./node_modules/wastefuldb/data/${data.id}.json`, jsoned, (someErr) => {
+                      if(someErr) return someErr;
                        if(this.feedback == true) {
                            console.log("Updated 1 document.");
                        }
                   })
-  
-              }
-  
-  
-          })
-      }
+                //// end multiple
+                } else {
+                    parsed = parsed.table[0];
+                     if(math == true) {
+                         if(isNaN(parsed[element] || change)) return console.error("Variable 'element' or 'change' returned NaN.");
+                          parsed[element] = parsed[element] + (change);
+                     } else {
+                         parsed[element] = change;
+                     }
+                    object.table.push(parsed);
+                     temp = JSON.stringify(object);
+                      fs.writeFile(`./node_modules/wastefuldb/data/${id}.json`, temp, (error) => {
+                          if(error) return error;
+                           if(this.feedback == true) {
+                               console.log("Updated 1 document.");
+                           }
+                      })
+                }
+                
+            })
+         } else { 
+            console.error("File does not exist.");
+         }
+    }
 
     size() {
         try {
