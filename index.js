@@ -1,9 +1,5 @@
 const fs = require('fs');
 
-let object = {
-    table: []
-}
-
 module.exports = class WastefulDB {
     constructor(options = {}) {
         this.feedback = options.feedback || false;
@@ -13,6 +9,9 @@ module.exports = class WastefulDB {
 
     insert(data) {
         if(!(data instanceof Object)) return console.error("Data being inserted is not an Object.");
+        let object = {
+            table: []
+        }
         let jsonify;
 
          try {
@@ -48,6 +47,9 @@ module.exports = class WastefulDB {
 
     insertMult(x, y, z) { // .insertMult({user: "Seth"}, {id: "001"}, {money: 106, purchases: 2});
     let xo = x instanceof Object; let yo = y instanceof Object; let zo = z instanceof Object;
+    let object = {
+        table: []
+    }
    let fb = this.feedback
     if(xo) object.table.push(x); if(yo) object.table.push(y); if(zo) object.table.push(z);
       let id;
@@ -141,6 +143,9 @@ module.exports = class WastefulDB {
 
     update(data = {id, element, change, math: false}) {
         const id = data.id; const element = data.element; const change = data.change; const math = data.math;
+        let object = {
+            table: []
+        }
         /// pre-defined variables
         let parsed;
         let temp; let temp2;
