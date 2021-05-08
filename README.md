@@ -5,6 +5,7 @@ A little custom made, document-oriented database project made with JavaScript an
 ### Setup
 ```js
 // Using NodeJS v15.14.0
+// Use "npm i wastefuldb@1.1.4" to use the barely functioning multi-field JSON functions
 
 const Wasteful = require('wastefuldb');
 const db = new Wasteful({feedback: true, serial: false}); // Boolean set to true to receive feedback from functions such as .insert(); Default: false
@@ -14,9 +15,7 @@ const db = new Wasteful({feedback: true, serial: false}); // Boolean set to true
 ```js
 /*
   db.insert();
-  
-  db.insertMult();
-  
+    
   db.find();
   
   db.search();
@@ -31,8 +30,6 @@ const db = new Wasteful({feedback: true, serial: false}); // Boolean set to true
 */
 
 db.insert({id: "Xv5312", name: "Seth R.", dob: "3/20/**"}); // ALWAYS include {id: "String/Number"} as the files are orgainzed by identifiers
-
-db.insertMult({id: "BrMc2", name: "Mick"}, {bal: 100, purchases: 0}, {inv: 0});
 
 db.find({id: "Xv5312"}, (res) => {
   console.log(`${res.name}\n${res.id}\n`)
@@ -70,13 +67,6 @@ db.insert({id: "Jk53c", name: "Richard", age: 53});
 ___
 
 ```js
-db.insertMult(x, y, z);
-```
-* x, y, z - Enter more than one collection in one file (`max 3`) with the same format to .insert() (an "id" is required in one of the three collection)
-
-___
-
-```js
 db.find({id: "Jk53c"}, (res) => {  
  if(!res) return;
   console.log(res) 
@@ -94,7 +84,7 @@ db.search({id: "Richard"}, async(res) => { console.log(await res) });
 ___
 
 ```js
-db.update({id: "Jk53c", element: "id", change: "Richard", math: false});
+db.update({id: "Jk53c", element: "name", change: "Richard", math: false});
 ```
 * id - The name of the file to update
 * element - What element of the file you want to update
