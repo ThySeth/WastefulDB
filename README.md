@@ -8,17 +8,19 @@ A little custom made, document-oriented database project made with JavaScript an
 // Use "npm i wastefuldb@1.1.4" to use the barely functioning multi-field JSON functions
 
 const Wasteful = require('wastefuldb');
-const db = new Wasteful({feedback: true, serial: false}); // Boolean set to true to receive feedback from functions such as .insert(); Default: false
+const db = new Wasteful({feedback: true} path?);
 ```
 
-### Features
+### Functions
 ```js
 /*
   db.insert();
     
   db.find();
   
-  db.search();
+  db.get();
+
+  db.delete();
   
   db.update();
 
@@ -26,67 +28,70 @@ const db = new Wasteful({feedback: true, serial: false}); // Boolean set to true
 
   db.check();
     
-  db.delete();
 */
 
-db.insert({id: "Xv5312", name: "Seth R.", dob: "3/20/**"}); // ALWAYS include {id: "String/Number"} as the files are orgainzed by identifiers
+db.insert({id: "1234", name: "seth", pass: "xyz"}); // An "id" variable is required in every insertion.
 
-db.find({id: "Xv5312"}, (res) => {
-  console.log(`${res.name}\n${res.id}\n`)
-});
+db.find({id: "1234"}); // Functions with or without an object for the identifier.
 
-db.search("Xv5312", async(result) => {
-  console.log(await result);
+db.get("1234", (result) => {
+    console.log(result);
 })
 
-db.update({id: "Xv5312", element: "age", change: -1, math: true});
+db.update({id: "1234", element: "pass", change: "abc"});
 
 db.size();
 
-db.check("BrMc2");
-db.check({id: "BrMc2"});
+db.check("1234");
+db.check({id: "1234"});
 
-db.delete({id: "Xv5312"});
-db.delete("Xv5312");
+db.delete({id: "1234"});
+db.delete("1234");
 ```
 
 ### In Depth
 ```js
-new Wasteful({feedback: true, serial: false});
+new Wasteful({feedback: true}, path?);
 ```
-* feedback - Should a notification be printed to the command prompt when an action is performed?
-* serial - Should file identifiers (aka names) be set based on files in directory? (Allows for the exclusion of {id: yadayada})
+* feedback - Sends a confirmation via console when a function is executed successfully. (default: false)
+* path - Provide a custom path where you wish JSON files to be written/read. (default: .../wastefuldb/data/)
 
 ___
 
+## .insert()
+#### Insert a file with as many variables as you wish. __Always__ include an "id" variable as that is what is use to read the JSON document in most cases.
 ```js
-db.insert({id: "Jk53c", name: "Richard", age: 53});
+db.insert({id: "1234", name: "seth", pass: "xyz"});
 ```
 * id - The name of the file and what will be used in the .find() function
 
 ___
 
+## .find()
+#### Provides the information of the specified file with the matching identifier.
 ```js
-db.find({id: "Jk53c"}, (res) => {  
- if(!res) return;
-  console.log(res) 
-});
+let info = db.find({id: "1234"});
+console.log(info);
 ```
-* id - The name/identifier of the file to look for which is set when using the .insert() function
+* id - The identifier of the file to find and display the information of.
 
 ___
 
+## .get()
+#### Unlike `db.find`, `db.get` will read each JSON file within the directory and read each identifier within to locate the specified file.
 ```js
-db.search({id: "Richard"}, async(res) => { console.log(await res) });
+db.get({id: "4321"}, async(res) => { console.log(await res) });
 ```
-* id - Searches through every file to find the matching ID rather than via filename
+* id - The internal identifier of a file.
 
 ___
 
+## .update()
+#### Update a specific element within the specified file. If the element within the file doesn't exist, the function will automatically add the element as well as what was going to be changed.
 ```js
-db.update({id: "Jk53c", element: "name", change: "Richard", math: false});
+db.update({id: "1234", element: "id", change: "4321", math: false});
 ```
-* id - The name of the file to update
+* id - The name/id of the file to update
 * element - What element of the file you want to update
 * change - What change you want to make to it
 * math - Does the change require (simple) math?
