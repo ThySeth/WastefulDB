@@ -8,7 +8,7 @@ A little custom made, document-oriented database project made with JavaScript an
 // Use "npm i wastefuldb@1.1.4" to use the barely functioning multi-field JSON functions
 
 const Wasteful = require('wastefuldb');
-const db = new Wasteful({feedback: true} path?);
+const db = new Wasteful({feedback: true}, path?);
 ```
 
 ### Functions
