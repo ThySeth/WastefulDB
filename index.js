@@ -1,168 +1,153 @@
 const fs = require('fs');
 
 module.exports = class WastefulDB {
-    constructor(options = {}) {
+    /**
+     * @param {Boolean} options.feedback Provides confirmation via the console each time most of the functions successfully execute. (default: false)
+     * @param {String} path Provide a custom directory/path to read/write each JSON file. Ignoring this will automatically read/write to ".../wastefuldb/data/"
+     */
+    constructor(options = {}, path = `${__dirname}/data/`) {
         this.feedback = options.feedback || false;
-        this.serial = options.serial || false;
+        this.path = path;
     }
 
+    /**
+     * Create a JSON file containing organized and modifiable information to be retrieved later.
+     * @param {Object} data Content to be stringified and stored in JSON.
+     * @param {String} data.id File name & identifier (REQUIRED)
+     */
 
     insert(data) {
-        if(!(data instanceof Object)) return console.error("Data being inserted is not an Object.");
-        let object = {
-            table: []
-        }
-        let jsonify;
-
-         try {
-           object.table.push(data);
-            if(this.serial == true) {
-            fs.readdir(`./node_modules/wastefuldb/data/`, (err, files) => {
-              if(err) return err;
-                let size = files.length;
-                 object.table[0].id = size;
-                 jsonify = JSON.stringify(object, null, 3);
-                fs.writeFile(`./node_modules/wastefuldb/data/${size}.json`, jsonify, (error) => {
-                    if(error) return error;
-                })
-            })
-            } else if(this.serial == false) {
-              if(!data.id) return console.error("Missing identifier in data object.");
-               jsonify = JSON.stringify(object, null, 3);
-                fs.writeFile(`./node_modules/wastefuldb/data/${data.id}.json`, jsonify, (anError) => {
-                    if(anError) return anError;
-                })
-            }
-
-            if(this.feedback == true) {
-                console.log("Inserted 1 document.");
-            }
-
-         }
-         catch(error) {
-            console.log(error);
-         }
-    }
-    
-    find(data, caller) {
-        fs.readFile(`./node_modules/wastefuldb/data/${data.id || data}.json`, async(err, foo) => {
-            if(!foo) return caller(null); // if(!res) return;
-             if(err) return err;
-
-            let obj = JSON.parse(foo);
-                 caller(obj.table[0]);
-        })
-    }
-
-    search(data, caller) {
-        fs.readdir(`./node_modules/wastefuldb/data/`, (err, files) => {
-            if(err) return err;
-             files.forEach(foo => {
-                 fs.readFile(`./node_modules/wastefuldb/data/${foo}`, (error, bar) => {
-                     if(error) return error;
-                      let obj = JSON.parse(bar);
-                       if(!obj) return;
-                        obj = obj.table[0];
-                         if(obj.id == data) return caller(obj);
-                 })
-             })
-        })
-    }
-
-
-    update(data = {id, element, change, math: false}) {
-        const id = data.id; const element = data.element; const change = data.change; const math = data.math;
-        let object = {
-            table: []
-        }
-        /// pre-defined variables
-        let parsed;
-        let temp;
-        ///
+        if(!(data instanceof Object)) return new Error("Information given must be an Object."); if(!data.id) return new Error("Object requires identifier to name file.");
         try {
-         if(fs.existsSync(`./node_modules/wastefuldb/data/${id}.json`) == true) { 
-            fs.readFile(`./node_modules/wastefuldb/data/${id}.json`, (err, file) => {
-             if(err) return err;
-              parsed = JSON.parse(file);
-                //// multiple
-                    parsed = parsed.table[0];
-                     if(math == true) {
-                         if(isNaN(parsed[element] || change)) return console.error("Variable 'element' or 'change' returned NaN.");
-                          parsed[element] = parsed[element] + (change);
-                     } else {
-                         parsed[element] = change;
-                     }
-                    object.table.push(parsed);
-                     temp = JSON.stringify(object);
-                      fs.writeFile(`./node_modules/wastefuldb/data/${id}.json`, temp, (error) => {
-                          if(error) return error;
-                           if(this.feedback == true) {
-                               console.log("Updated 1 document.");
-                           }
-                      })
-            })
-         } else { 
-            fs.readdir(`./node_modules/wastefuldb/data/`, (err, files) => {
-                if(err) return err;
-                 files.forEach(file => {
-                    fs.readFile(`./node_modules/wastefuldb/data/${file}/`, (error, res) => {
-                     if(error) return error;
-                        let obj = JSON.parse(res);
-                        if(!obj) return;
-                         obj = obj.table[0];
-                          if(obj.id == id)  {
-                              if(math == true) {
-                                  if(isNaN(obj[element] || change)) return console.error("Variable 'element' or 'change' returned NaN.");
-                                   obj[element] = obj[element] + (change);
-                              } else {
-                                  obj[element] = change;
-                              }
-                              object.table.push(obj);
-                               temp = JSON.stringify(object);
-                                fs.writeFile(`./node_modules/wastefuldb/data/${file}/`, temp, (finalErr) => {
-                                    if(finalErr) return finalErr;
-                                     if(this.feedback == true) {
-                                         console.log("Updated 1 document.");
-                                     }
-                                });
-                          }
-                    })
-                 })
-            })
-         }
-        } catch(tryErr) {
-            console.error(tryErr);
+         let obj = [ data ];
+          obj = JSON.stringify(obj);
+           fs.writeFileSync(`${this.path}${data.id}.json`, obj);
+           this.feedback == true ? console.log("Successfully created 1 document.") : "";
+        }
+        catch(err) {
+            console.log(err);
         }
     }
+
+    /**
+     * Retrieves and parses the data within the specified file.
+     * @param {Object | String} [data] The identifier of a file.
+     * @returns {Array}
+     */
+
+    find(data) {
+      try {
+        let info = fs.readFileSync(`${this.path}${data.id || data}.json`);
+          info = JSON.parse(info);
+          this.feedback == true ? console.log("Successfully found 1 document.") : "";
+           return info[0];
+      } catch(err) {
+          console.log(err);
+      }
+    }
+
+    /**
+     * Find and update a specified element within a file. Set "math" to be true for SIMPLE math.
+     * @type {Object}
+     * @param {Object} data Object containing arguments to successully update files. (id, element, change, math?)
+     * @param {String} data.id Identifier of the target file to update.
+     * @param {String} data.element The element of the object to modify.
+     * @param {String} data.change Changes to be made to the target element.
+     * @param {Boolean} [data.math=false] Whether the change requires simple math or not. (Default: false)
+     */
+
+     update(data) {
+        if(!(data instanceof Object)) throw new Error("Object is required to update file."); if(!data.id || !data.element || !data.change) throw new Error("Unable to complete update due to misssing field(s) in Object."); (!data.math ? data.math = false : data.math);
+      let obj;  
+      try{
+         let file = fs.readFileSync(`${this.path}${data.id}.json`); file = JSON.parse(file); file = file[0];
+          if(file[data.element] == null || undefined) { // Insert new field if the provided element does not exist
+            file[data.element] = data.change;
+             obj = [ file ]; obj = JSON.stringify(obj);
+              fs.writeFileSync(`${this.path}${data.id}.json`, obj);
+          } else if(file[data.element]) { // If element exists:
+              if(data.math == true) { // If math is set to true: 
+                if(isNaN(parseInt(file[data.element])) || isNaN(parseInt(data.change))) return new Error("Unable to update file due to given element or change returning NaN.");
+                 file[data.element] = parseInt(file[data.element] + (data.change));
+                  obj = [ file ]; obj = JSON.stringify(obj);
+                   fs.writeFileSync(`${this.path}${data.id}.json`, obj);
+              } else { // If math is set to false:
+                  file[data.element] = data.change;
+                   obj = [ file ]; obj = JSON.stringify(obj);
+                    fs.writeFileSync(`${this.path}${data.id}.json`, obj);
+              }
+          }
+          this.feedback == true ? console.log("Successfully updated 1 document.") : "";
+        }catch(err){
+            console.log(err);
+        }
+    }
+
+    /**
+     * Search the given directory for a specified identifier regardless of file name.
+     * @param {String} data Identifier to scan for in each file.
+     * @returns {Array}
+     */
+
+    get(data, callback) {
+        try {
+           let files = fs.readdirSync(`${this.path}`)
+                 files.forEach(file => {
+                     let info = fs.readFileSync(`${this.path}${file}`)
+                          let obj = JSON.parse(info); obj = obj[0];
+                           if(!obj) return new Error("File abnormality occurred whilst attempting to read.\nFile name: " + file + ".json");
+                            if(obj.id == data.id || data) {
+                                this.feedback == true ? console.log("Successfully retrieved 1 document.") : "";
+                             return callback(obj);
+                        }
+                 })
+        }catch(err){
+            console.log(err);
+        }
+    }
+
+    /**
+     * Function is intended to save on "resources" by returning boolean values rather than committing to the process of retrieving, parsing, and returning file data.
+     * 
+     * @param {Object | String} data Provide the identifier of a file to view if it currently exists.
+     * @returns {boolean}
+     */
+
+    check(data) {
+      try {
+        return fs.existsSync(`${this.path}${data.id || data}.json`);
+      } catch(err) {
+          console.log(err);
+      }
+    }
+
+    /**
+     * Returns the total amount of files in the default or given directory where data is read/written.
+     * @returns {Number}
+     */
 
     size() {
         try {
-        let files = fs.readdirSync(`./node_modules/wastefuldb/data/`);
-         return files.length;
-        }
-        catch(err) {
-            return err;
+            let files = fs.readdirSync(`${this.path}`);
+             return files.length;
+        }catch(err) {
+            console.log(err);
         }
     }
 
-    check(data) {
-        let chk = fs.existsSync(`./node_modules/wastefuldb/data/${data.id || data}.json`);
-         if(chk) {
-             return true;
-         } else {
-             return false;
-         }
-    }
+    /**
+     * Deletes the specified JSON file.
+     * @param {Object | String} data Identifier of the file.
+     */
 
     delete(data) {
-        fs.rm(`./node_modules/wastefuldb/data/${data.id || data}.json`, (err) => {
-            if(err) return err;
-             if(this.feedback == true) {
-                 console.log("Removed 1 document.");
-             }
-        })
+        try {
+            fs.rm(`${this.path}${data.id || data}.json`);
+             this.feedback == true ? console.log("Successfully deleted 1 document.") : "";
+        } catch(err) {
+            console.log(err);
+        }
     }
-
 
 }
 
