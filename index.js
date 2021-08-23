@@ -3,11 +3,11 @@ const fs = require('fs');
 module.exports = class WastefulDB {
     /**
      * @param {Boolean} options.feedback Provides confirmation via the console each time most of the functions successfully execute. (default: false)
-     * @param {String} path Provide a custom directory/path to read/write each JSON file. Ignoring this will automatically read/write to ".../wastefuldb/data/"
+     * @param {String} options.path Provide a custom directory/path to read/write each JSON file. Ignoring this will automatically read/write to ".../wastefuldb/data/"
      */
-    constructor(options = {}, path = `${__dirname}/data/`) {
+    constructor(options = {}) {
         this.feedback = options.feedback || false;
-        this.path = path;
+        this.path = options.path || `${__dirname}/data/`;
     }
 
     /**
@@ -65,14 +65,14 @@ module.exports = class WastefulDB {
             file[data.element] = data.change;
              obj = [ file ]; obj = JSON.stringify(obj);
               fs.writeFileSync(`${this.path}${data.id}.json`, obj);
-          } else if(file[data.element]) { // If element exists:
+          } else { // If element exists:
               if(data.math == true) { // If math is set to true: 
                 if(isNaN(parseInt(file[data.element])) || isNaN(parseInt(data.change))) return new Error("Unable to update file due to given element or change returning NaN.");
                  file[data.element] = parseInt(file[data.element] + (data.change));
                   obj = [ file ]; obj = JSON.stringify(obj);
                    fs.writeFileSync(`${this.path}${data.id}.json`, obj);
               } else { // If math is set to false:
-                  file[data.element] = data.change;
+                  file[data.element] = (data.change == "true" ? true : data.change == "false" ? false : data.change);
                    obj = [ file ]; obj = JSON.stringify(obj);
                     fs.writeFileSync(`${this.path}${data.id}.json`, obj);
               }
