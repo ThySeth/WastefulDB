@@ -84,13 +84,17 @@ module.exports = class WastefulDB {
     }
 
     /**
-     * Reads each entry within the data file, parses from JSON, then pushed and returned as a singular object containing all information within the given directory.
+     * Reads each file within the directory, parses, pushes and returns an object of the information in each JSON file. Providing an id and/or element will filter through and push each file matching the profile.
+     * @param {Object} [data=undefined]
+     * @param {String} [data.id]
+     * @param {String} [data.element]
      * @returns {Object}
      */
 
-    collect() {
+    collect(data) {
      let obj = []
         try {
+        if(!data) {
            let files = fs.readdirSync(`${this.path}`);
             files.forEach(file => {
                 let info = fs.readFileSync(`${this.path}${file}`); if(!obj) return new Error("File abnormality ocurred whilst attempting to read a file.\nFile name: " + file)
@@ -98,6 +102,22 @@ module.exports = class WastefulDB {
                   obj.push(info);
             });
              return obj;
+         } else {
+            let files = fs.readdirSync(`${this.path}`);
+            files.forEach(file => {
+                let target = fs.readFileSync(`${this.path}${file}`);
+                 target = JSON.parse(target); target = target[0];
+                  if(data.id && data.element == undefined) { // collect({id: });
+                      if(target.id == data.id) return obj.push(target);
+                  } else if(data.element && data.id == undefined) { // collect()
+                       if(target[data.element]) return obj.push(target);
+                  } else if(data.element && data.id) {
+                        if(target.id == data.id && target[data.element]) return obj.push(target);
+                  } else {
+                      return;
+                  }
+            });
+         }
         } catch(err) {
             console.log(err.message);
         }
