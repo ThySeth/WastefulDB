@@ -5,7 +5,7 @@ A little custom made, document-oriented database project made with JavaScript an
 ### Setup
 ```js
 const Wasteful = require('wastefuldb');
-const db = new Wasteful({feedback: true}, path?);
+const db = new Wasteful({feedback: true, path: `${__dirname}/info/`});
 ```
 
 ### Functions
