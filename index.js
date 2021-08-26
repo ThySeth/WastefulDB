@@ -25,7 +25,7 @@ module.exports = class WastefulDB {
            this.feedback == true ? console.log("Successfully created 1 document.") : "";
         }
         catch(err) {
-            console.log(err);
+            console.log(err.message);
         }
     }
 
@@ -42,7 +42,7 @@ module.exports = class WastefulDB {
           this.feedback == true ? console.log("Successfully found 1 document.") : "";
            return info[0];
       } catch(err) {
-          console.log(err);
+          console.log(err.message);
       }
     }
 
@@ -79,7 +79,7 @@ module.exports = class WastefulDB {
           }
           this.feedback == true ? console.log("Successfully updated 1 document.") : "";
         }catch(err){
-            console.log(err);
+            console.log(err.message);
         }
     }
 
@@ -99,7 +99,7 @@ module.exports = class WastefulDB {
             });
              return obj;
         } catch(err) {
-            console.log(err);
+            console.log(err.message);
         }
     }
 
@@ -122,7 +122,7 @@ module.exports = class WastefulDB {
                         }
                  })
         }catch(err){
-            console.log(err);
+            console.log(err.message);
         }
     }
 
@@ -137,7 +137,7 @@ module.exports = class WastefulDB {
       try {
         return fs.existsSync(`${this.path}${data.id || data}.json`);
       } catch(err) {
-          console.log(err);
+        console.log(err.message);
       }
     }
 
@@ -151,7 +151,7 @@ module.exports = class WastefulDB {
             let files = fs.readdirSync(`${this.path}`);
              return files.length;
         }catch(err) {
-            console.log(err);
+            console.log(err.message);
         }
     }
 
@@ -165,7 +165,7 @@ module.exports = class WastefulDB {
             fs.rm(`${this.path}${data.id || data}.json`);
              this.feedback == true ? console.log("Successfully deleted 1 document.") : "";
         } catch(err) {
-            console.log(err);
+            console.log(err.message);
         }
     }
 
