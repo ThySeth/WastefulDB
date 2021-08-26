@@ -4,9 +4,6 @@ A little custom made, document-oriented database project made with JavaScript an
 
 ### Setup
 ```js
-// Using NodeJS v15.14.0
-// Use "npm i wastefuldb@1.1.4" to use the barely functioning multi-field JSON functions
-
 const Wasteful = require('wastefuldb');
 const db = new Wasteful({feedback: true}, path?);
 ```
@@ -24,6 +21,8 @@ const db = new Wasteful({feedback: true}, path?);
   
   db.update();
 
+  db.collect();
+
   db.size();
 
   db.check();
@@ -39,6 +38,8 @@ db.get("1234", (result) => {
 })
 
 db.update({id: "1234", element: "pass", change: "abc"});
+
+db.collect();
 
 db.size();
 
@@ -97,3 +98,16 @@ db.update({id: "1234", element: "id", change: "4321", math: false});
 * math - Does the change require (simple) math?
 
 ___
+
+## .collect()
+#### Reads, parses, then pushes information from each JSON file into one collection. Most useful for filtering through entries.
+```js
+let data = db.collect();
+data.forEach(info => {
+  if(info.active == true) {
+    console.log(info);
+  } else {
+    return;
+  }
+})
+```
