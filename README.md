@@ -52,7 +52,7 @@ db.delete("1234");
 
 ### In Depth
 ```js
-new Wasteful({feedback: true}, path?);
+new Wasteful({feedback: true, path: `${__dirname}/info/`});
 ```
 * feedback - Sends a confirmation via console when a function is executed successfully. (default: false)
 * path - Provide a custom path where you wish JSON files to be written/read. (default: .../wastefuldb/data/)
