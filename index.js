@@ -84,6 +84,26 @@ module.exports = class WastefulDB {
     }
 
     /**
+     * Reads each entry within the data file, parses from JSON, then pushed and returned as a singular object containing all information within the given directory.
+     * @returns {Object}
+     */
+
+    collect() {
+     let obj = []
+        try {
+           let files = fs.readdirSync(`${this.path}`);
+            files.forEach(file => {
+                let info = fs.readFileSync(`${this.path}${file}`); if(!obj) return new Error("File abnormality ocurred whilst attempting to read a file.\nFile name: " + file)
+                 info = JSON.parse(info); info = info[0];
+                  obj.push(info);
+            });
+             return obj;
+        } catch(err) {
+            console.log(err);
+        }
+    }
+
+    /**
      * Search the given directory for a specified identifier regardless of file name.
      * @param {String} data Identifier to scan for in each file.
      * @returns {Array}
@@ -95,7 +115,7 @@ module.exports = class WastefulDB {
                  files.forEach(file => {
                      let info = fs.readFileSync(`${this.path}${file}`)
                           let obj = JSON.parse(info); obj = obj[0];
-                           if(!obj) return new Error("File abnormality occurred whilst attempting to read.\nFile name: " + file + ".json");
+                           if(!obj) return new Error("File abnormality occurred whilst attempting to read.\nFile name: " + file);
                             if(obj.id == data.id || data) {
                                 this.feedback == true ? console.log("Successfully retrieved 1 document.") : "";
                              return callback(obj);
