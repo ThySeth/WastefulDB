@@ -99,8 +99,8 @@ db.update({id: "1234", element: "id", change: "4321", math: false});
 
 ___
 
-## .collect()
-#### Reads, parses, then pushes information from each JSON file into one collection. Most useful for filtering through entries.
+## .collect({id?, element?})
+#### Reads, parses, then pushes information from each JSON file into one collection. Provide an id and/or element to further filter through each file.
 ```js
 let data = db.collect();
 data.forEach(info => {
