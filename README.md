@@ -5,7 +5,7 @@ A little custom made, document-oriented database project made with JavaScript an
 ### Setup
 ```js
 const Wasteful = require('wastefuldb');
-const db = new Wasteful({feedback: true, path: `${__dirname}/info/`});
+const db = new Wasteful({feedback: true, path: `${__dirname}/data/`, serial: true});
 ```
 
 ### Functions
@@ -54,8 +54,9 @@ db.delete("1234");
 ```js
 new Wasteful({feedback: true, path: `${__dirname}/info/`});
 ```
-* feedback - Sends a confirmation via console when a function is executed successfully. (default: false)
-* path - Provide a custom path where you wish JSON files to be written/read. (default: .../wastefuldb/data/)
+* feedback - Sends a confirmation via console when a function is executed successfully. (__default__: false)
+* path - Provide a custom path where you wish JSON files to be written/read. (__default__: .../wastefuldb/data/)
+* serial - Automatically assigns filenames/identifiers based on the size of the set path. (__default__: false)
 
 ___
 
@@ -87,15 +88,25 @@ db.get({id: "4321"}, async(res) => { console.log(await res) });
 
 ___
 
-## .update()
-#### Update a specific element within the specified file. If the element within the file doesn't exist, the function will automatically add the element as well as what was going to be changed.
+## .update() (by identifier)
+#### Update a specific element within the specified file. If the element within the file doesn't exist, the function will automatically add the element as well as what was going to be changed. Not recommended when serialization is enabled.
 ```js
 db.update({id: "1234", element: "id", change: "4321", math: false});
 ```
 * id - The name/id of the file to update
 * element - What element of the file you want to update
 * change - What change you want to make to it
-* math - Does the change require (simple) math?
+* math? - Does the change require (simple) math?
+
+___
+
+## .update() (by element content)
+#### Searches through every file within the directory, attempting to match the element 'name' and it's 'content'. When found, updates the specified element within the file. Recommended when serialization is enabled.
+```js
+db.update({element: "age", change: 1, math: true}, {name: "animal", content: "fox"});
+```
+* name - The name of an element within a file to check.
+* content - The contents to be matched with the contents of the given element.
 
 ___
 
