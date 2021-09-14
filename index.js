@@ -24,6 +24,7 @@ module.exports = class WastefulDB {
           let obj, altid=false, dirsize = fs.readdirSync(this.path); dirsize = dirsize.length;
         if(this.serial == true) {
             (data.id > 0) ? data._id = dirsize : data.id = dirsize;   data.id ? altid=true : altid;
+            console.log(data);
              obj = [ data ]; obj = JSON.stringify(obj);
               fs.writeFileSync(`${this.path}${data._id || data.id}.json`, obj);
                this.feedback == true ? console.log(`Successfully created 1 document. ( ${data._id || data.id}.json )`) : "";
@@ -190,7 +191,7 @@ module.exports = class WastefulDB {
                  files.forEach(file => {
                      let info = fs.readFileSync(`${this.path}${file}`)
                           let obj = JSON.parse(info); obj = obj[0];
-                           if(!obj) return new Error("File abnormality occurred whilst attempting to read.\nFile name: " + file);
+                           if(!obj) return console.log("File abnormality occurred whilst attempting to read.\nFile name: " + file);
                             if(obj.id == data.id || data) {
                                 this.feedback == true ? console.log("Successfully retrieved 1 document.") : "";
                              return callback(obj);
@@ -232,14 +233,34 @@ module.exports = class WastefulDB {
 
     /**
      * Deletes the specified JSON file.
-     * @param {Object | String} data Identifier of the file.
+     * @param {String} [data.id] Identifier of a file to delete. Will not delete the specified file if 'name' and 'content' are also provided.
+     * @param {String} [data.name] Field name within a file to match the 'content' with.
+     * @param {String} [data.content] Content within the given field name to match in order to locate the correct file for deletion.
      */
 
-    delete(data) {
+
+    delete(data = {id: undefined, name: undefined, content: undefined}) {
         try {
-            fs.rm(`${this.path}${data.id || data}.json`);
-             this.feedback == true ? console.log("Successfully deleted 1 document.") : "";
-        } catch(err) {
+        if(!(data instanceof Object)) return console.log("You must specify which file to be deleted within an object.");
+        if(!data.id && !data.name && !data.content) return console.log("Invalid search terms. Please specify an 'id' or a field 'name' and 'content'.");
+          let count = 0;
+            if(!data.id && data.name != undefined && data.content != undefined) {
+                let files = fs.readdirSync(`${this.path}`)
+                     files.forEach(file => {
+                         let stuff = fs.readFileSync(this.path + file); stuff = JSON.parse(stuff); stuff = stuff[0];
+                          if(!stuff[data.name] || stuff[data.name] != data.content) {
+                            count += 1;
+                             count == files.length ? console.log("Unable to locate file pertaining to the given details.") : ""
+                          } else if(stuff[data.name] == data.content) {
+                              fs.rmSync(`${this.path}${file}`);
+                               this.feedback == true ? console.log("Successfully deleted 1 document.") : ""
+                          }
+                     })
+            } else if(data.id != undefined && !data.name || !data.content) {
+                fs.rmSync(`${this.path}${data.id}.json`);
+                 this.feedback == true ? console.log("Successfully deleted 1 document.") : ""
+            }
+        }catch(err) {
             console.log("Error: " + err.message);
         }
     }
