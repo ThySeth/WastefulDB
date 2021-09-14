@@ -47,7 +47,7 @@ db.check("1234");
 db.check({id: "1234"});
 
 db.delete({id: "1234"});
-db.delete("1234");
+db.delete({name: "name", content: "seth"});
 ```
 
 ### In Depth
