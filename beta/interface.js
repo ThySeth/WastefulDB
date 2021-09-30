@@ -50,7 +50,7 @@ function configSetup() {
 
 function repeater () {
   wipe();
-    readline.question(`${chalk.underline.green("WastefulDB Beta Interface")}\n \n` + "1) Configuration\n2) Insert document\n", function(answer) {
+    readline.question(`${chalk.underline.green("WastefulDB Beta Interface")}\n \n` + "1) Configuration\n2) Insert document\n3) Find document\n", function(answer) {
         switch(answer) {
             case "1":
              configSetup();
@@ -58,13 +58,41 @@ function repeater () {
             case "2":
              insert();
             break;
+            case "3":
+             findSimple();
+            break;
         }
         repeater();
     })
 }
 
-let data = {}
+function findSimple() {
+    wipe();
+     readline.question(`Provide the ${chalk.blue("identifier")} of the file!\n`, function(id) {
+         if(id == "end") return repeater();
+          let info = db.find(id);
+           if(!info) {
+                readline.question("Type 'end' to exit or type 'retry' to retry.\n", function(answer) {
+                    if(answer == "end") {
+                        repeater();
+                    } else if(answer == "retry") {
+                        findSimple();
+                    }
+                })
+           } else {
+               console.log(info);
+               readline.question("Type 'end' to exit or type 'retry' to try another search.\n", function(answer) {
+                   if(answer == "end") {
+                       repeater();
+                   } else if(answer == "retry") {
+                       findSimple();
+                   }
+               })
+           }
+     })
+}
 
+let data = {}
 function insert() {
   wipe();
   let finalizer;
@@ -80,6 +108,8 @@ function insert() {
             finalizer = data;
               db.insert(finalizer);
                return repeater();
+        } else if(name == "end" && (Object.keys(data)).length == 0) {
+            return repeater();
         }
         wipe();
          readline.question(`Field name: ${name}\nField value: `, function(value) {
@@ -87,7 +117,9 @@ function insert() {
                   finalizer = data; finalizer = JSON.stringify(finalizer);
                    db.insert(finalizer);
                     return repeater();
-              }
+              } else if(name == "end" && (Object.keys(data)).length == 0) {
+                return repeater();
+            }
               data[name] = value;
                 insert();
          })
