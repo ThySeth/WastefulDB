@@ -6,7 +6,6 @@ const readline = rl.createInterface({
 })
 const Wasteful = require('./index.js');
 const fs = require('fs');
-const { WSAEINPROGRESS } = require('constants');
 let config = fs.readFileSync("./config.json"); config = JSON.parse(config);
 
 const db = new Wasteful({feedback: config.feed, path: config.path, serial: config.serial});
@@ -17,7 +16,7 @@ function wipe() {
     }
 }
 
-const configSetup = function() {
+function configSetup() {
     wipe();
     readline.question(`${chalk.underline("Configurations")}\n1) Serialization ( ${chalk.cyan(config.serial)} )\n2) Feedback ( ${chalk.cyan(config.feed)} )\n3) Directory/Path ( ${chalk.green(config.path)} )\nType 'end' to exit.\n`, function(configCheck) {
         switch(configCheck) {
@@ -29,7 +28,7 @@ const configSetup = function() {
             break;
             case "2":
              config.feed == false ? config.feed = true : config.feed = false;
-              console.log(`Feedback: ${updates.feed}`);
+              console.log(`Feedback: ${config.feed}`);
                configSetup();
             break;
             case "3":
@@ -49,19 +48,51 @@ const configSetup = function() {
     });
 }
 
-const repeater = function () {
+function repeater () {
   wipe();
-    readline.question(`${chalk.underline.green("WastefulDB Beta Interface")}\n \n` + "1) Configuration\n", function(answer) {
+    readline.question(`${chalk.underline.green("WastefulDB Beta Interface")}\n \n` + "1) Configuration\n2) Insert document\n", function(answer) {
         switch(answer) {
             case "1":
              configSetup();
             break;
             case "2":
-             dirLister();
+             insert();
             break;
         }
         repeater();
     })
+}
+
+let data = {}
+
+function insert() {
+  wipe();
+  let finalizer;
+   if(config.serial == false && (Object.keys(data)).includes("id") == false) {
+       readline.question(`Provide your file's ${chalk.underline("unique")} identifier: `, function(identifier) {
+         if(identifier == "end") return repeater();
+           data["id"] = identifier
+            insert();
+       })
+   } else {
+    readline.question("Field name: ", function(name) {
+        if(name == "end" && (Object.keys(data)).length > 0) {
+            finalizer = data;
+              db.insert(finalizer);
+               return repeater();
+        }
+        wipe();
+         readline.question(`Field name: ${name}\nField value: `, function(value) {
+              if(value == "end" && (Object.keys(data)).length > 0) {
+                  finalizer = data; finalizer = JSON.stringify(finalizer);
+                   db.insert(finalizer);
+                    return repeater();
+              }
+              data[name] = value;
+                insert();
+         })
+    })
+  }
 }
 
 repeater();
