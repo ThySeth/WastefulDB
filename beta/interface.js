@@ -6,6 +6,7 @@ const readline = rl.createInterface({
 })
 const Wasteful = require('./index.js');
 const fs = require('fs');
+const { WSAEINPROGRESS } = require('constants');
 let config = fs.readFileSync("./config.json"); config = JSON.parse(config);
 
 const db = new Wasteful({feedback: config.feed, path: config.path, serial: config.serial});
@@ -18,7 +19,7 @@ function wipe() {
 
 function configSetup() {
     wipe();
-    readline.question(`${chalk.underline("Configurations")}\n1) Serialization ( ${chalk.cyan(config.serial)} )\n2) Feedback ( ${chalk.cyan(config.feed)} )\n3) Directory/Path ( ${chalk.green(config.path)} )\nType 'end' to exit.\n`, function(configCheck) {
+    readline.question(`${chalk.underline("Configurations")}\n1) Serialization ( ${chalk.cyan(config.serial)} )\n2) Feedback ( ${chalk.cyan(config.feed)} )\nType 'end' to exit.\n`, function(configCheck) {
         switch(configCheck) {
             case "1":
              //config.serial == false ? updates.push({serial: true}) : updates.push({serial: false});
@@ -31,12 +32,6 @@ function configSetup() {
               console.log(`Feedback: ${config.feed}`);
                configSetup();
             break;
-            case "3":
-             readline.question("Provide your new directory path. Ensure it is formatted correctly! (ex: `${__dirname}data/`)", function(newPath) {
-                 config.path = newPath;
-                  configSetup();
-             });
-            break;
             
             case "end":
              console.log("Exiting configuration setup...");
@@ -48,9 +43,18 @@ function configSetup() {
     });
 }
 
+function info() {
+  wipe();
+    readline.question(`${chalk.underline.green("WastefulDB Help / Info")}\n \n${chalk.yellow(">")} You can type ${chalk.green("end")} at any time during a process to return to the options menu.\n \n${chalk.yellow(">")} Enabling ${chalk.blue("serialization")} in the configuration automatically assigns identifiers to files so you don't have to.\nType 'end' to return to the menu.\n`, function (answer) {
+        if(answer == "end") {
+            return repeater();
+        }
+    })
+}
+
 function repeater () {
   wipe();
-    readline.question(`${chalk.underline.green("WastefulDB Beta Interface")}\n \n` + "1) Configuration\n2) Insert document\n3) Find document\n", function(answer) {
+    readline.question(`${chalk.underline.green("WastefulDB's Beta Interface")}\n \n` + `${chalk.cyan("1")}) Configuration\n${chalk.cyan("2")}) Insert document\n${chalk.cyan("3")}) Find document\n${chalk.cyan("4")}) Update document\n${chalk.cyan("5")}) Help / Info\n`, function(answer) {
         switch(answer) {
             case "1":
              configSetup();
@@ -61,8 +65,81 @@ function repeater () {
             case "3":
              findSimple();
             break;
+            case "4":
+             update();
+            break;
+            case "5":
+             info();
+            break;
         }
         repeater();
+    })
+}
+
+function update() {
+  let updater = {}
+  let fieldman = {}
+    readline.question(`Which method do you wish to update the file? ${chalk.yellow("id")} or ${chalk.yellow("field")}?`, function(answer) {
+    if(answer == "end") return repeater();
+        if(answer == "id") {
+            readline.question("Provide the identifier of the file you wish to update.\n", function(identifier) {
+        if(identifier == "end") return repeater();
+                updater["id"] = identifier;
+                 readline.question(`${chalk.blue("ID:")} ${identifier}\nProvide the element within the file you wish to update.\n`, function(element) {
+            if(element == "end") return repeater();
+                    updater["element"] = element;
+                     readline.question(`${chalk.blue("ID:")} ${identifier}\n${chalk.blue("Element:")} ${element}\nProvide the change you wish to make.\n`, function(change) {
+                if(change == "end") return repeater();
+                        updater["change"] = change;
+                         readline.question(`${chalk.blue("ID:")} ${identifier}\n${chalk.blue("Element:")} ${element}\n${chalk.blue("Change:")} ${change}\nDoes this update require math? ${chalk.yellow("(y / n)")}\n`, function(math){
+                             if(math == "y") {
+                                 updater["math"] = true;
+                                 console.log(updater)
+                                 db.update(updater);
+                                    repeater();
+                             } else if(math == "n") {
+                                 updater["math"] = false;
+                                 console.log(updater)
+                                 db.update(updater);
+                                    repeater();
+                             } else if(math == "end") {
+                                 repeater();
+                             }
+                         }) 
+                     })
+                 })
+            })
+        } else if(answer == "field") {
+            readline.question(`Provide the field ${chalk.underline("name")} contained within a file.\n`, function(searchName) {
+        if(searchName == "end") return repeater();
+                fieldman["name"] = searchName;
+                 readline.question(`Provide the field's (${searchName}) ${chalk.underline("value")} attached to it.\n`, function(searchValue) {
+            if(searchValue == "end") return repeater();
+                     fieldman["content"] = searchValue;
+                      readline.question(`Provide the element within the file you wish to update.\n`, function(element) {
+                if(element == "end") return repeater();
+                          updater["element"] = element
+                           readline.question(`${chalk.blue("Element:")} ${element}\nProvide the change you wish to make.\n`, function(change) {
+                    if(change == "end") return repeater();
+                            updater["change"] = change;
+                             readline.question(`${chalk.blue("Element:")} ${element}\n${chalk.blue("Change:")} ${change}\nDoes this update require math? (${chalk.yellow("(y / n)")})\n`, function(math) {
+                                 if(math == "y") {
+                                     updater["math"] = true;
+                                     db.update(updater, fieldman);
+                                        repeater();
+                                 } else if(math == "n") {
+                                     updater["math"] = false;
+                                     db.update(updater, fieldman);
+                                        repeater();
+                                 } else if(math == "end") {
+                                     return repeater();
+                                 }
+                             })
+                           })
+                      })
+                 })
+            })
+        }
     })
 }
 
