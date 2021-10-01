@@ -52,9 +52,43 @@ function info() {
     })
 }
 
+function del() {
+    wipe();
+    let data = {}
+     readline.question(`Do you have the unique identifier (i.e file name) of the document? ( ${chalk.yellow("y / n")} )`, function(answer){
+         if(answer == "y") {
+             readline.question("Provide the identifier of the file.\n", function(identifier) {
+                 let check = db.check(identifier);
+                  if(check == false) {
+                    readline.question(`${chalk.red("Err")}: No file matching the given ID exists.\nType 'end' to exit or type 'retry' to try again.`, function(res) {
+                           if(res == "end") {
+                               repeater();
+                           } else if(res == "retry") {
+                               del();
+                           }
+                       })
+                  } else {
+                      db.delete({id: identifier});
+                       repeater();
+                  }
+             })
+         } else if(answer == "n") {
+             readline.question(`Provide a ${chalk.underline("field name")} within a file.\n`, function(fieldName) {
+                 if(fieldName == "end") return repeater();
+                  data["name"] = fieldName;
+                   readline.question(`Provide the ${chalk.underline("value")} inside your given field.\n`, function(fieldContent) {
+                     data["content"] = fieldContent;
+                      db.delete(data); 
+                       repeater();  
+                   })
+             })
+         }
+     })
+}
+
 function repeater () {
   wipe();
-    readline.question(`${chalk.underline.green("WastefulDB's Beta Interface")}\n \n` + `${chalk.cyan("1")}) Configuration\n${chalk.cyan("2")}) Insert document\n${chalk.cyan("3")}) Find document\n${chalk.cyan("4")}) Update document\n${chalk.cyan("5")}) Help / Info\n`, function(answer) {
+    readline.question(`${chalk.underline.green("WastefulDB's Beta Interface")}\n \n` + `${chalk.cyan("1")}) Configuration\n${chalk.cyan("2")}) Insert document\n${chalk.cyan("3")}) Find document\n${chalk.cyan("4")}) Update document\n${chalk.cyan("5")}) Delete document\n${chalk.cyan("6")}) Help / Info\n`, function(answer) {
         switch(answer) {
             case "1":
              configSetup();
@@ -69,6 +103,9 @@ function repeater () {
              update();
             break;
             case "5":
+             del();
+            break;
+            case "6":
              info();
             break;
         }
@@ -193,11 +230,16 @@ function insert() {
               if(value == "end" && (Object.keys(data)).length > 0) {
                   finalizer = data; finalizer = JSON.stringify(finalizer);
                    db.insert(finalizer);
+                   let i=0;
+                    while((Object.keys(data)).length > 0) {
+                        data[i] = "";
+                         i++;
+                    }
                     return repeater();
               } else if(name == "end" && (Object.keys(data)).length == 0) {
                 return repeater();
             }
-              data[name] = value;
+              data[name] = (Number(value) || value.toString());
                 insert();
          })
     })
