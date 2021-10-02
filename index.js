@@ -1,15 +1,17 @@
 const fs = require('fs');
 
+let config = fs.readFileSync("./config.json"); config = JSON.parse(config);
+
 module.exports = class WastefulDB {
     /**
-     * @param {Boolean} options.feedback Provides confirmation via the console each time most of the functions successfully execute. (default: false)
+     * @param {Boolean} options.feedback Provides confirmation via the console each time most of the functions successfully execute. (default: true)
      * @param {String} options.path Provide a custom directory/path to read/write each JSON file. Ignoring this will automatically read/write to ".../wastefuldb/data/"
-     * @param {Boolean} options.serial When true, you are no longer required to include an id variable to your file data. Instead, the identifier is based on the directory size at the time.
+     * @param {Boolean} options.serial When true, you are no longer required to include an id variable to your file data. Instead, the identifier is based on the directory size at the time. (default: true)
      */
     constructor(options = {feedback, path, serial}) {
-        this.feedback = options.feedback || false;
+        this.feedback = options.feedback || config.feed;
         this.path = options.path || `${__dirname}/data/`;
-        this.serial = options.serial || false;
+        this.serial = options.serial || config.serial;
     }
 
     /**
@@ -238,7 +240,7 @@ module.exports = class WastefulDB {
 
     delete(data) {
         try {
-            fs.rm(`${this.path}${data.id || data}.json`);
+            fs.rmSync(`${this.path}${data.id || data}.json`);
              this.feedback == true ? console.log("Successfully deleted 1 document.") : "";
         } catch(err) {
             console.log("Error: " + err.message);
