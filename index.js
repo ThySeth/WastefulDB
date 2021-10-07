@@ -1,6 +1,6 @@
 const fs = require('fs');
 
-let config = fs.readFileSync("./config.json"); config = JSON.parse(config);
+let config = fs.readFileSync(`${__dirname}/config.json`); config = JSON.parse(config);
 
 module.exports = class WastefulDB {
     /**
