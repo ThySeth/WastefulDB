@@ -119,6 +119,18 @@ db.update({element: "age", change: 1, math: true}, {name: "animal", content: "fo
 
 ___
 
+
+## .update() (child element)
+#### Update the value of an element's "child" or sub-value of the given element. "Child" is referred to as a nested collection element/value within your file.
+```js
+db.update({element: "name", child: "first", change: "Mike", math: false}, {name: "animal", content: "fox"});
+```
+* element - The parent element within a file which houses the child element (i.e nested collection).
+* child - The child of the provided 'element' to be changed.
+
+___
+
+
 ## .collect({id?, element?})
 #### Reads, parses, then pushes information from each JSON file into one collection. Provide an id and/or element to further filter through each file.
 ```js
