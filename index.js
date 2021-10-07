@@ -65,7 +65,8 @@ module.exports = class WastefulDB {
      * @type {Object}
      * @param {Object} data Object containing arguments to successully update files. (id, element, change, math?)
      * @param {String} data.id Identifier of the target file to update.
-     * @param {String} data.element The element of the object to modify.
+     * @param {String} data.element The element OR parent element of a child element.
+     * @param {String} [data.child] The child of the specified element.
      * @param {String} data.change Changes to be made to the target element.
      * @param {Boolean} [data.math=false] Whether the change requires simple math or not. (Default: false)
      * 
@@ -74,7 +75,7 @@ module.exports = class WastefulDB {
      * @param {String} [element.content] The contents of the previously given field in order to find a specific file.
      */
 
-    update(data = {id, element, change, math:false}, element = {name:undefined, content:undefined}) { 
+    update(data = {id, element, child, change, math:false}, element = {name:undefined, content:undefined}) { 
      /*
         'element' variable serves as an alternate method of locating files.
         when using such, you are not required to include an id field in 'data'.
@@ -102,14 +103,27 @@ module.exports = class WastefulDB {
                       target = JSON.parse(target); target = target[0];
                        if(target[element.name] && target[element.name] == element.content) {
                          if(data.math == true) {
+                            if(data.child) {
+                                if(isNaN(Number((target[data.element])[data.child]) || isNaN(Number(data.change)))) return console.error("Unable to update file due to given element, element child, or change returning NaN.");
+                                 (target[data.element])[data.child] = Number((target[data.element])[data.child]) + (Number(data.change));
+                                  obj = [ target ]; obj = JSON.stringify(obj);
+                                   fs.writeFileSync(`${this.path}${file}`, obj);
+                            } else {
                              if(isNaN(Number(target[data.element])) || isNaN(Number(data.change))) return console.error("Unable to update file due to given element or change returning NaN.");
                              target[data.element] = Number(target[data.element] + (Number(data.change)));
                                obj = [ target ]; obj = JSON.stringify(obj);
                                 fs.writeFileSync(`${this.path}${file}`, obj);
+                            }
                          } else {
+                          if(data.child) {
+                              (target[data.element])[data.child] = (data.change == "true" ? true : data.change == "false" ? false : data.change);
+                               obj = [target]; obj = JSON.stringify(obj);
+                                fs.writeFileSync(`${this.path}${file}`, obj);
+                          } else {
                             target[data.element] = (data.change == "true" ? true : data.change == "false" ? false : data.change);
                              obj = [ target ]; obj = JSON.stringify(obj);
                               fs.writeFileSync(`${this.path}${file}`, obj);
+                          }
                          }
                          this.feedback == true ? console.log(`Successfully updated 1 document. ( ${file} )`) : "";
                        }
