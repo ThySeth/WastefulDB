@@ -61,7 +61,7 @@ function del() {
              readline.question("Provide the identifier of the file.\n", function(identifier) {
                  let check = db.check(identifier);
                   if(check == false) {
-                    readline.question(`${chalk.red("Err")}: No file matching the given ID exists.\nType 'end' to exit or type 'retry' to try again.`, function(res) {
+                    readline.question(`${chalk.red("Err")}: No file matching the given ID exists.\nType 'end' to exit or type 'retry' to try again.\n`, function(res) {
                            if(res == "end") {
                                repeater();
                            } else if(res == "retry") {
@@ -92,52 +92,22 @@ function del() {
 
 function repeater () {
   wipe();
-    readline.question(`${chalk.underline.green("WastefulDB's Beta Interface")}\n \n` + `${chalk.cyan("1")}) Configuration\n${chalk.cyan("2")}) Insert document\n${chalk.cyan("3")}) Find document\n${chalk.cyan("4")}) Update document\n${chalk.cyan("5")}) Delete document\n${chalk.cyan("6")}) Help / Info\n'#?' for help.\n`, function(answer) {
-        switch(answer.charAt(0)) {
+    readline.question(`${chalk.underline.green("WastefulDB's Beta Interface")}\n \n` + `${chalk.cyan("1")}) Configuration\n${chalk.cyan("2")}) Insert document\n${chalk.cyan("3")}) Find document\n${chalk.cyan("4")}) Update document\n${chalk.cyan("5")}) Delete document\n${chalk.cyan("6")}) Help / Info\n`, function(answer) {
+        switch(answer) {
             case "1":
-             if(answer.charAt(1) == "?") {
-                 readline.question(`${chalk.underline.cyan("Configurations / Settings")}\n \nModify how files should be stored as well as if there should be feedback provided after every database action.\n`, function(chek) {
-                     if(chek == "end") return repeater();
-                 })
-             } else {
              configSetup();
-             }
             break;
             case "2":
-            if(answer.charAt(1) == "?") {
-                readline.question(`${chalk.underline.cyan("Insert a Document")}\n \nBegin the process of creating a new document with information. IF serialization is set to ${chalk.blue("true")}, you will not be required to provide an ID field.\n`, function(chek) {
-                    if(chek == "end") return repeater();
-                });   
-            } else {
              insert();
-            }
             break;
             case "3":
-            if(answer.charAt(1) == "?") {
-            readline.question(`${chalk.underline.cyan("Find a Document")}\n \nProvide an identifier or a field and it's value and view the contents of the document pertaining to the information.\n`, function(chek) {
-                if(chek == "end") return repeater();
-            })
-            } else {
              findSimple();
-            }
             break;
             case "4":
-            if(answer.charAt(1) == "?") {
-                readline.question(`${chalk.underline.cyan("Update a Document")}\n \nProvide an ${chalk.blue("ID")}, ${chalk.blue("Element")} to change, ${chalk.blue("Change")} to be made, and whether or not ${chalk.blue("Math")} is needed. Alternatively, you can provide a field ${chalk.cyan("Name")} and the ${chalk.cyan("Contents")} within the document to search for.\n`, function(chek) {
-                    if(chek == "end") return repeater();
-                })
-            } else {
              update();
-            }
             break;
             case "5":
-            if(answer.charAt(1) == "?") {
-                readline.question(`${chalk.underline.cyan("Delete a Document")}\n \nProvide the identifier of a document to be deleted.\n`, function(chek) {
-                    if(chek == "end") return repeater();
-                })
-            } else {
              del();
-            }
             break;
             case "6":
              info();
@@ -150,7 +120,7 @@ function repeater () {
 function update() {
   let updater = {}
   let fieldman = {}
-    readline.question(`Which method do you wish to update the file? ${chalk.yellow("id")} or ${chalk.yellow("field")}?`, function(answer) {
+    readline.question(`Which method do you wish to update the file? ${chalk.yellow("id")} or ${chalk.yellow("field")}?\n`, function(answer) {
     if(answer == "end") return repeater();
         if(answer == "id") {
             readline.question("Provide the identifier of the file you wish to update.\n", function(identifier) {
