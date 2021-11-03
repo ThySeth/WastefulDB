@@ -8,6 +8,10 @@ const Wasteful = require('wastefuldb');
 const db = new Wasteful({feedback: true, path: `${__dirname}/data/`, serial: true});
 ```
 
+### Overall Requirements:
+- `NodeJS v14.17.6 or higher`
+- `NPM v6.14.15 or higher`
+
 ### Functions
 ```js
 /*
@@ -57,6 +61,8 @@ The interface file can be found within the "`wastefuldb`" folder likely located 
 
 When launching the interface, you simple press a number listed in the options menu, press enter, and provide the information needed to execute an action!
 
+### Interface Requirement(s):
+- `npm i chalk` (this should already be installed in the package itself)
 ___
 
 ### In Depth
