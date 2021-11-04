@@ -94,7 +94,7 @@ module.exports = class WastefulDB {
      */
         let obj, files;
          try {
-            if(!data.element || !data.change) return console.error("You must provide information needed to update files."); // if function is empty
+            if(data.element == undefined || data.change == undefined) return console.error("You must provide information needed to update files."); // if function is empty
              if(element instanceof Object && element.name != undefined && element.content != undefined) { // run collect-type function for updates
               if((element.name && !element.content) || (!element.name && element.content)) return console.error("Unable to locate file with missing field. ('name' or 'content')");
                 files = fs.readdirSync(`${this.path}`);
@@ -129,7 +129,7 @@ module.exports = class WastefulDB {
                        }
                  })
              } else { // run standard update function
-              if(!data.id || !data.element || !data.change) return console.error("One or more fields is incomplete. ('id', 'element', and/or 'change').");
+              if(data.id == undefined || data.element == undefined || data.change == undefined) return console.error("One or more fields is incomplete. ('id', 'element', and/or 'change').");
                 let file = fs.readFileSync(`${this.path}${data.id}.json`); file = JSON.parse(file); file = file[0];
                  if(file[data.element] == null || undefined) { // Insert new field if the provided element does not exist
                   file[data.element] = data.change;
