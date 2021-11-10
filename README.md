@@ -55,6 +55,8 @@ db.delete("1234");
 ```
 
 ## WastefulDB Interface
+(Only available in Github repo)
+
 A newly developed form of interacting with your data stored via WastefulDB; A command-line interface which could be used for quick changes or personal usage without the hastle of typing a whole new set of code.
 
 The interface file can be found within the "`wastefuldb`" folder likely located in your `node_modules` folder and is named "**WastefulDB Interface**"! (A shortcut to "wastefulbat" for design reasons.)
