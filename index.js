@@ -157,8 +157,9 @@ module.exports = class WastefulDB {
     /**
      * Reads each file within the directory, parses, pushes and returns an object of the information in each JSON file. Providing an id and/or element will filter through and push each file matching the profile.
      * @param {Object} [data=undefined]
-     * @param {String} [data.id]
-     * @param {String} [data.element]
+     * @param {String} [data.id] The identifier stored within the file.
+     * @param {String} [data.element] An element within a file to search for.
+     * @param {String} [data.value] The value of an element to search for. An "element" is required to use this.
      * @returns {Object}
      */
 
@@ -179,16 +180,21 @@ module.exports = class WastefulDB {
                 let target = fs.readFileSync(`${this.path}${file}`);
                 if(!target) return console.error("Couldn't find any files pertaining to the given fields.")
                  target = JSON.parse(target); target = target[0];
-                  if(data.id && data.element == undefined) { // collect({id: });
-                      if(target.id == data.id) return obj.push(target);
-                  } else if(data.element && data.id == undefined) { // collect()
+                  if(data.id && data.element == undefined) { // "id" without "element"
+                      if(data.id == target.id) return obj.push(target);
+                  } else if(data.element && data.value == undefined && data.id == undefined) { // "element" without "id"
                        if(target[data.element]) return obj.push(target);
-                  } else if(data.element && data.id) {
+                  } else if(data.element && data.value && data.id == undefined) { // "element" and "value" without "id"
+                        if(target[data.element] && target[data.element] == data.value) return obj.push(target);
+                  } else if(data.element && data.id && data.value == undefined) { // "element" and "id" without "value"
                         if(target.id == data.id && target[data.element]) return obj.push(target);
+                  } else if(data.element && data.id && data.value) { // "element", "id", and "value"
+                        if(target.id == data.id && target[data.element] && target[data.element] == data.value) return obj.push(target);
                   } else {
                       return;
                   }
             });
+             return obj.length == 0 ? undefined : obj;
          }
         } catch(err) {
             console.log("Error: " + err.message);
