@@ -1,6 +1,5 @@
 const fs = require('fs');
 
-let config = fs.readFileSync(`${__dirname}/config.json`); config = JSON.parse(config);
 
 module.exports = class WastefulDB {
     /**
@@ -9,9 +8,9 @@ module.exports = class WastefulDB {
      * @param {Boolean} options.serial When true, you are no longer required to include an id variable to your file data. Instead, the identifier is based on the directory size at the time. (default: true)
      */
     constructor(options = {feedback, path, serial}) {
-        this.feedback = options.feedback || config.feed;
+        this.feedback = options.feedback || false
         this.path = options.path || `${__dirname}/data/`;
-        this.serial = options.serial || config.serial;
+        this.serial = options.serial || false
     }
 
     /**
@@ -26,7 +25,6 @@ module.exports = class WastefulDB {
           let obj, altid=false, dirsize = fs.readdirSync(this.path); dirsize = dirsize.length;
         if(this.serial == true) {
             (data.id > 0) ? data._id = dirsize : data.id = dirsize;   data.id ? altid=true : altid;
-            console.log(data);
              obj = [ data ]; obj = JSON.stringify(obj);
               fs.writeFileSync(`${this.path}${data._id || data.id}.json`, obj);
                this.feedback == true ? console.log(`Successfully created 1 document. ( ${data._id || data.id}.json )`) : "";
