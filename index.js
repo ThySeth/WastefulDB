@@ -29,7 +29,7 @@ module.exports = class WastefulDB {
               fs.writeFileSync(`${this.path}${data._id || data.id}.json`, obj);
                this.feedback == true ? console.log(`Successfully created 1 document. ( ${data._id || data.id}.json )`) : "";
         } else {
-         if(!data.id) return console.log("Cannot create document without valid 'id' variable.");
+         if(!data.id) return console.log("Cannot create document without valid 'id' key and value.");
          obj = [data]
           obj = JSON.stringify(obj);
            fs.writeFileSync(`${this.path}${data.id}.json`, obj);
@@ -176,7 +176,7 @@ module.exports = class WastefulDB {
             let files = fs.readdirSync(`${this.path}`);
             files.forEach(file => {
                 let target = fs.readFileSync(`${this.path}${file}`);
-                if(!target) return console.error("Couldn't find any files pertaining to the given fields.")
+                if(!target) return console.error("Couldn't find any files pertaining to the given key and value.")
                  target = JSON.parse(target); target = target[0];
                   if(data.id && data.element == undefined) { // "id" without "element"
                       if(data.id == target.id) return obj.push(target);
@@ -207,16 +207,38 @@ module.exports = class WastefulDB {
 
     get(data, callback) {
         try {
+        let end = false;
+        if(!(data instanceof Object)) return new Error("Unable to perform 'get' function due to 'data' variable not containing Object with query.");
            let files = fs.readdirSync(`${this.path}`)
                  files.forEach(file => {
+                    if(end == true) return;
                      let info = fs.readFileSync(`${this.path}${file}`)
                           let obj = JSON.parse(info); obj = obj[0];
+                          let dataAtt = Object.entries(data); dataAtt = dataAtt[0];
                            if(!obj) return new Error("File abnormality occurred whilst attempting to read.\nFile name: " + file);
-                            if(obj.id == data.id || data) {
+                        if(!data.id) {
+                            Object.entries(obj).forEach((item) => {
+                                if(item[0] == dataAtt[0] && item[1] == dataAtt[1]) {
+                                    this.feedback == true ? console.log("Successfully retrieved 1 document.") : "";
+                                    end = true;
+                                     return callback(obj);
+                                } else {
+                                    return;
+                                }
+                            })
+                        } else{
+                            if(obj.id == data.id) {
                                 this.feedback == true ? console.log("Successfully retrieved 1 document.") : "";
-                             return callback(obj);
+                                end = true;
+                                 return callback(obj);
+                            } else {
+                                return;
+                            }
                         }
                  })
+                 if(end == false) {
+                     this.feedback == true ? console.log("Unable to retrieve any documents pertaining to the given query.") : "";
+                 }
         }catch(err){
             console.log("Error: " + err.message);
         }
