@@ -12,68 +12,39 @@ const db = new Wasteful({feedback: true, path: `${__dirname}/data/`, serial: tru
 - `NodeJS v14.17.6 or higher`
 - `NPM v6.14.15 or higher`
 
-### Functions
-```js
-/*
-  db.insert();
-    
-  db.find();
-  
-  db.get();
+### Table of Content
+- [Setup](#setup)
+- [Requirements](#overall-requirements)
+- [In Depth](#in-depth)
+  - [Specify Directories](#specify-directories)
+  - [Insert Documents](#insert)
+  - [Find Documents](#find)
+  - ["Get" Documents](#get)
+  - [Update via IDs](#update-by-identifier)
+  - [Update via Element Content](#update-by-element-content)
+  - [Update via Child Element](#update-child-element)
+  - [Collect Documents](#collectid-element-value)
 
-  db.delete();
-  
-  db.update();
-
-  db.collect();
-
-  db.size();
-
-  db.check();
-    
-*/
-
-db.insert({id: "1234", name: "seth", pass: "xyz"}); // An "id" variable is required in every insertion.
-
-db.find({id: "1234"}); // Functions with or without an object for the identifier.
-
-db.get("1234", (result) => {
-    console.log(result);
-})
-
-db.update({id: "1234", element: "pass", change: "abc"});
-
-db.collect();
-
-db.size();
-
-db.check("1234");
-db.check({id: "1234"});
-
-db.delete({id: "1234"});
-db.delete("1234");
-```
-
-## WastefulDB Interface
-(Only available in Github repo)
-
-A newly developed form of interacting with your data stored via WastefulDB; A command-line interface which could be used for quick changes or personal usage without the hastle of typing a whole new set of code.
-
-The interface file can be found within the "`wastefuldb`" folder likely located in your `node_modules` folder and is named "**WastefulDB Interface**"! (A shortcut to "wastefulbat" for design reasons.)
-
-When launching the interface, you simple press a number listed in the options menu, press enter, and provide the information needed to execute an action!
-
-### Interface Requirement(s):
-- `npm i chalk` (this should already be installed in the package itself)
 ___
 
 ### In Depth
 ```js
-new Wasteful({feedback: true, path: `${__dirname}/info/`});
+new Wasteful({feedback: true, path: `${__dirname}/info/`, serial: false});
 ```
 * feedback - Sends a confirmation via console when a function is executed successfully. (__default__: false)
 * path - Provide a custom path where you wish JSON files to be written/read. (__default__: .../wastefuldb/data/)
 * serial - Automatically assigns filenames/identifiers based on the size of the set path. (__default__: false)
+
+___
+
+## Specify Directories
+#### Each function is capable of interacting with specific directories outside the "path" constructor option when specified within the {dir} option.
+```js
+db.find({id: "1234"}, {dir: `${__dirname}/patrons/`});
+
+db.insert({id: "5545", name: "Sherry", pass: "BB822", active: false}, {dir: `${__dirname}/accounts/`});
+```
+* dir - A directory's specific address to search, insert, and update in.
 
 ___
 
