@@ -21,9 +21,9 @@ const db = new Wasteful({feedback: true, path: `${__dirname}/data/`, serial: tru
   - [Find Documents](#find)
   - ["Get" Documents](#get)
   - [Update via IDs](#update-by-identifier)
-  - [Update via Element Content](#update-by-element-content)
-  - [Update via Child Element](#update-child-element)
-  - [Collect Documents](#collectid-element-value)
+  - [Update via Key Content](#update-by-key-content)
+  - [Update via Child Key](#update-child-key)
+  - [Collect Documents](#collectid-key-value)
 
 ___
 
@@ -77,41 +77,41 @@ db.get({id: "4321"}, async(res) => { console.log(await res) });
 ___
 
 ## .update() (by identifier)
-#### Update a specific element within the specified file. If the element within the file doesn't exist, the function will automatically add the element as well as what was going to be changed. Not recommended when serialization is enabled.
+#### Update a specific key within the specified file. If the key within the file doesn't exist, the function will automatically add the key as well as what was going to be changed. Not recommended when serialization is enabled.
 ```js
-db.update({id: "1234", element: "id", change: "4321", math: false});
+db.update({id: "1234", key: "id", change: "4321", math: false});
 ```
 * id - The name/id of the file to update
-* element - What element of the file you want to update
+* key - What key of the file you want to update
 * change - What change you want to make to it
 * math? - Does the change require (simple) math?
 
 ___
 
-## .update() (by element content)
-#### Searches through every file within the directory, attempting to match the element 'name' and it's 'content'. When found, updates the specified element within the file. Recommended when serialization is enabled.
+## .update() (by key content)
+#### Searches through every file within the directory, attempting to match the key 'name' and it's 'content'. When found, updates the specified key within the file. Recommended when serialization is enabled.
 ```js
-db.update({element: "age", change: 1, math: true}, {name: "animal", content: "fox"});
+db.update({key: "age", change: 1, math: true}, {name: "animal", content: "fox"});
 ```
-* name - The name of an element within a file to check.
-* content - The contents to be matched with the contents of the given element.
+* name - The name of an key within a file to check.
+* content - The contents to be matched with the contents of the given key.
 
 ___
 
 
-## .update() (child element)
-#### Update the value of an element's "child" or sub-value of the given element. "Child" is referred to as a nested collection element/value within your file.
+## .update() (child key)
+#### Update the value of a key's "child" or sub-value of the given key. "Child" is referred to as a nested collection key/value within your file.
 ```js
-db.update({element: "name", child: "first", change: "Mike", math: false}, {name: "animal", content: "fox"});
+db.update({key: "name", child: "first", change: "Mike", math: false}, {name: "animal", content: "fox"});
 ```
-* element - The parent element within a file which houses the child element (i.e nested collection).
-* child - The child of the provided 'element' to be changed.
+* key - The parent key within a file which houses the child key (i.e nested collection).
+* child - The child of the provided 'key' to be changed.
 
 ___
 
 
-## .collect({id?, element?, value?})
-#### Reads, parses, then pushes information from each JSON file into one collection. Provide an id or element & value to filter results.
+## .collect({id?, key?, value?})
+#### Reads, parses, then pushes information from each JSON file into one collection. Provide an id or key & value to filter results.
 ```js
 let data = db.collect();
 data.forEach(info => {
