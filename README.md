@@ -98,6 +98,17 @@ db.update({key: "age", change: 1, math: true}, {name: "animal", content: "fox"})
 
 ___
 
+## .updateMass(id, options)
+#### Provide an array of identifiers to search and update all files with the given information. updateMass() supports the "child" option.
+```js
+db.updateMass(["2", "3", "4"], {key: "age", change: -1, math: true});
+```
+* [identifiers] - An array of identifiers to find and update the given information.
+* key - (aka element) The name of a key within an Object to modify.
+* change - The change to make to the key.
+
+___
+
 
 ## .update() (child key)
 #### Update the value of a key's "child" or sub-value of the given key. "Child" is referred to as a nested collection key/value within your file.
@@ -109,6 +120,16 @@ db.update({key: "name", child: "first", change: "Mike", math: false}, {name: "an
 
 ___
 
+## .updateMass(id, options)
+#### Provide an array of identifiers to search and update all files with the given information. updateMass() supports the "child" option.
+```js
+db.updateMass(["2", "3", "4"], {key: "age", change: -1, math: true});
+```
+* [identifiers] - An array of identifiers to find and update the given information.
+* key - (aka element) The name of a key within an Object to modify.
+* change - The change to make to the key.
+
+___
 
 ## .collect({id?, key?, value?})
 #### Reads, parses, then pushes information from each JSON file into one collection. Provide an id or key & value to filter results.
