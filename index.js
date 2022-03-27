@@ -11,6 +11,8 @@ module.exports = class WastefulDB {
         this.feedback = options.feedback || false
         this.path = options.path || `${__dirname}/data/`;
         this.serial = options.serial || false
+
+        this.path = (this.path).charAt((this.path).length-1) == "/" ? this.path : this.path + "/";
     }
 
     /**
@@ -75,31 +77,18 @@ module.exports = class WastefulDB {
      * 
      * @param {String} [directory.dir] Specific directory to search for and update files. 
      *
-     * @example > db.update({id: "1234", element: "name", child: "first", change: "Seth", math: false}, {dir: `${__dirname}/data/`});
-     * @example > db.update({element: "age", change: 2, math: true}, {name: "animal", content: "ape"});
+     * @example > db.update({id: "1234", key: "name", child: "first", change: "Seth", math: false}, {dir: `${__dirname}/data/`});
+     * @example > db.update({key: "age", change: 2, math: true}, {name: "animal", content: "ape"});
      */
 
-    update(data = {id, key, child, change, math:false}, element = {name:undefined, content:undefined}, directory = {dir: this.path}) { 
-     /*
-        'element' variable serves as an alternate method of locating files.
-        when using such, you are not required to include an id field in 'data'.
-        this is meant for cases in which serialization is set to 'true' -
-        in order to find and update files containing unique elements.
-         
-        element.name == name of a field to find
-        element.content == the contents of the field to match
-        ex:
-         {
-             name: "pass",
-             content: "abc"
-         }
-     */
+    update(data = {id, key, child, change, math:false}, element = {name:undefined, content:undefined, dir: undefined}, directory = {dir: this.path}) { 
         let obj, files;
          try {
+           directory.dir = (element instanceof Object && element.dir != undefined) ? element.dir : undefined;
             if(data.key == undefined || data.change == undefined) return console.error("You must provide information needed to update files."); // if function is empty
              if(element instanceof Object && element.name != undefined && element.content != undefined) { // run collect-type function for updates
               if((element.name && !element.content) || (!element.name && element.content)) return console.error("Unable to locate file with missing field. ('name' or 'content')");
-                files = fs.readdirSync(`${directory.dir}`);
+              files = fs.readdirSync(`${directory.dir}`);
                  files.forEach((file) => {
                      let target = fs.readFileSync(`${directory.dir}${file}`);
                       target = JSON.parse(target); target = target[0];
@@ -325,7 +314,7 @@ module.exports = class WastefulDB {
     * @param {String} options.change The change to make to an Object.
     * @param {Boolean} options.math Does the change require SIMPLE math?
     * 
-    * @example db.updateMass(["2", "3", "4"], {key: "age", change: -1, math: true});
+    * @example > db.updateMass(["2", "3", "4"], {key: "age", change: -1, math: true});
     */
 
     updateMass(identifier = [], options = {key, child, change, math}, directory = {dir: this.path}) {
