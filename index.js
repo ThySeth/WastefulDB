@@ -1,3 +1,4 @@
+const { info } = require('console');
 const fs = require('fs');
 
 
@@ -6,11 +7,13 @@ module.exports = class WastefulDB {
      * @param {Boolean} options.feedback Provides confirmation via the console each time most of the functions successfully execute. (default: false)
      * @param {String} options.path Provide a custom directory to route each JSON file. Ignoring this will default read/write to ".../wastefuldb/data/"
      * @param {Boolean} options.serial When true, you are no longer required to include an id variable to your file data. Instead, the identifier is based on the directory size at the time. (default: false)
+     * @param {Boolean} options.kill When an error occurs and option set to true, automatically kills the process to prevent further errors. (default: false)
      */
-    constructor(options = {feedback, path, serial}) {
+    constructor(options = {feedback, path, serial, kill}) {
         this.feedback = options.feedback || false
         this.path = options.path || `${__dirname}/data/`;
         this.serial = options.serial || false
+        this.kill = options.kill || false
 
         this.path = (this.path).charAt((this.path).length-1) == "/" ? this.path : this.path + "/";
     }
@@ -23,7 +26,7 @@ module.exports = class WastefulDB {
      * @example > db.insert({id: "5523", name: "Margot", pass: "HelloWorld~", active: false}, {dir: `${__dirname}/data/`});
      */
 
-     insert(data, directory = {dir: this.path}) {
+     insert(data={id}, directory = {dir: this.path}) {
         if(!(data instanceof Object)) return console.log("Information given must be an Object."); 
         try {
           let obj, altid=false, dirsize = fs.readdirSync(directory.dir); dirsize = dirsize.length;
@@ -41,9 +44,49 @@ module.exports = class WastefulDB {
          }
         }
         catch(err) {
+          if(this.kill == true) {
+              throw new Error(err.message);
+          } else {
             console.log("Error: " + err.message);
+          }
         }
     }
+
+    /**
+     * 
+     * @param {String | Object} id 
+     * @param {Array} data 
+     * @returns 
+     */
+     insertMass(data = [], directory = {dir: this.path}) {    
+        let cancel = false;
+        try {
+         if((!(data instanceof Array)) || data.length == 1) return console.log("More than one Object must be stored within an Array.");
+          if(!data[0]) return console.log("Objects must be stored within the data Array.");
+           if(!(data.find(foo => foo.id).id) && this.serial == false) return console.log("You must provide an \"id\" within an Object.");       
+        data.forEach(item => {
+          if(cancel == true) return;
+            if(!(item instanceof Object)) {
+                cancel = true;
+                 return console.log("Unable to create document. One or more items in Array are not an Object.");
+            } else {
+                return;
+            }
+        })
+        if(cancel == false) {
+        let id = data.find(foo => foo.id); id = id.id;
+          let obj = JSON.stringify(data);
+            fs.writeFileSync(`${directory.dir}${id}.json`, obj);
+             this.feedback == true ? console.log("Successfully creatd 1 document.") : "";
+        }
+      } catch(err) {
+          if(this.kill == true) {
+              throw new Error(err.message);
+          } else {
+              console.log("Error: " + err.message);
+          }
+      }
+     }
 
     /**
      * Retrieves and parses the data within the specified file.
@@ -60,7 +103,11 @@ module.exports = class WastefulDB {
           this.feedback == true ? console.log("Successfully found 1 document.") : "";
            return info[0];
       } catch(err) {
+        if(this.kill == true) {
+          throw new Error(err.message);
+        } else {
           console.log("Error: " + err.message);
+        }
       }
     }
 
@@ -121,6 +168,7 @@ module.exports = class WastefulDB {
                  })
              } else { // run standard update function
               if(data.id == undefined || data.key == undefined || data.change == undefined) return console.error("One or more fields is incomplete. ('id', 'element', and/or 'change').");
+              data.id = (data.id).toString();
                 let file = fs.readFileSync(`${directory.dir}${data.id}.json`); file = JSON.parse(file); file = file[0];
                  if(file[data.key] == null || undefined) { // Insert new field if the provided element does not exist
                   file[data.key] = data.change;
@@ -155,7 +203,11 @@ module.exports = class WastefulDB {
               this.feedback == true ? console.log("Successfully updated 1 document.") : "";
              }
          }catch(err){
+            if(this.kill == true) {
+                throw new Error(err.message);
+            }else{
              console.error("Error: " + err.message);
+            }
          }
     }
 
@@ -188,6 +240,7 @@ module.exports = class WastefulDB {
                 let target = fs.readFileSync(`${directory.dir}${file}`);
                 if(!target) return console.error("Couldn't find any files pertaining to the given key and value.")
                  target = JSON.parse(target); target = target[0];
+                 data.id = (data.id).toString();
                   if(data.id && data.key == undefined) { // "id" without "element"
                       if(data.id == target.id) return obj.push(target);
                   } else if(data.key && data.value == undefined && data.id == undefined) { // "element" without "id"
@@ -205,7 +258,11 @@ module.exports = class WastefulDB {
              return obj.length == 0 ? undefined : obj;
          }
         } catch(err) {
+         if(this.kill == true) {
+            throw new Error(err.message);
+         } else {
             console.log("Error: " + err.message);
+         }
         }
     }
 
@@ -238,6 +295,7 @@ module.exports = class WastefulDB {
                                 }
                             })
                         } else{
+                         data.id = (data.id).toString();
                             if(obj.id == data.id) {
                                 this.feedback == true ? console.log("Successfully retrieved 1 document.") : "";
                                 end = true;
@@ -251,7 +309,11 @@ module.exports = class WastefulDB {
                      this.feedback == true ? console.log("Unable to retrieve any documents pertaining to the given query.") : "";
                  }
         }catch(err){
+            if(this.kill == true) {
+                throw new Error(err.message);
+            } else {
             console.log("Error: " + err.message);
+            }
         }
     }
 
@@ -284,7 +346,11 @@ module.exports = class WastefulDB {
             let files = fs.readdirSync(`${directory.dir}`);
              return files.length;
         }catch(err) {
+         if(this.kill == true) {
+            throw new Error(err.message);
+         } else {
             console.log("Error: " + err.message);
+         }
         }
     }
 
@@ -301,7 +367,11 @@ module.exports = class WastefulDB {
             fs.rmSync(`${directory.dir}${data.id || data}.json`);
              this.feedback == true ? console.log("Successfully deleted 1 document.") : "";
         } catch(err) {
+          if(this.kill == true) {
+            throw new Error(err.message);
+          } else {
             console.log("Error: " + err.message);
+          }
         }
     }
 
@@ -354,7 +424,11 @@ module.exports = class WastefulDB {
                 this.feedback == true ? console.log(`Successfully updated ${c} documents.`) : "";
             }
         } catch(err) {
-            console.log("Error: " + err.message)
+          if(this.kill == true) {
+              throw new Error(err.message);
+          } else {
+            console.log("Error: " + err.message);
+          }
         }
     }
 
