@@ -49,11 +49,19 @@ db.insert({id: "5545", name: "Sherry", pass: "BB822", active: false}, {dir: `${_
 ___
 
 ## .insert()
-#### Insert a file with as many variables as you wish. __Always__ include an "id" variable as that is what is use to read the JSON document in most cases.
+#### Insert a file with as many variables as you wish. __Always__ include an "id" variable if serial is set to *false* as that is what is use to read the JSON document in most cases.
 ```js
 db.insert({id: "1234", name: "seth", pass: "xyz"});
 ```
 * id - The name of the file and what will be used in the .find() function
+
+___
+
+## .insertBulk()
+#### Insert a file with multiple Objects within an Array.
+```js
+db.insertBulk( [{id: "5545"}, {first: "Sully", last: "V."}, {password: "password"}] );
+```
 
 ___
 
@@ -70,9 +78,10 @@ ___
 ## .get()
 #### Unlike `db.find`, `db.get` will read each JSON file within the directory and read each identifier within to locate the specified file.
 ```js
-db.get({id: "4321"}, async(res) => { console.log(await res) });
+db.get({id: "4321", dir: `${__dirname}/data/`}, async(res) => { console.log(await res) });
 ```
 * id - The internal identifier of a file.
+* dir - A specific directory to search in. (optional)
 
 ___
 
