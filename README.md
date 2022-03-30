@@ -18,6 +18,7 @@ const db = new Wasteful({feedback: false, path: `${__dirname}/data/`, serial: fa
 - [In Depth](#in-depth)
   - [Specify Directories](#specify-directories)
   - [Insert Documents](#insert)
+  - [Insert Bulk Documents](#insertBulk)
   - [Find Documents](#find)
   - ["Get" Documents](#get)
   - [Update via IDs](#update-by-identifier)
