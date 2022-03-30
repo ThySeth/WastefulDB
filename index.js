@@ -53,12 +53,13 @@ module.exports = class WastefulDB {
     }
 
     /**
+     * Create a bulk document containing an Array of Objects.
+     * @param {String | Object} id The identifier within a file to search for.
+     * @param {Array} data An array of Objects containing modifiable data.
      * 
-     * @param {String | Object} id 
-     * @param {Array} data 
-     * @returns 
+     * @example > db.insertBulk( [{first: "Sal", last: "V."}, {age: 44}, {balance: 102,543}] );
      */
-     insertMass(data = [], directory = {dir: this.path}) {    
+     insertBulk(data = [], directory = {dir: this.path}) {    
         let cancel = false;
         try {
          if((!(data instanceof Array)) || data.length == 1) return console.log("More than one Object must be stored within an Array.");
@@ -77,7 +78,7 @@ module.exports = class WastefulDB {
         let id = data.find(foo => foo.id); id = id.id;
           let obj = JSON.stringify(data);
             fs.writeFileSync(`${directory.dir}${id}.json`, obj);
-             this.feedback == true ? console.log("Successfully creatd 1 document.") : "";
+             this.feedback == true ? console.log("Successfully created 1 document.") : "";
         }
       } catch(err) {
           if(this.kill == true) {
@@ -131,24 +132,60 @@ module.exports = class WastefulDB {
     update(data = {id, key, child, change, math:false}, element = {name:undefined, content:undefined, dir: undefined}, directory = {dir: this.path}) { 
         let obj, files;
          try {
-           directory.dir = (element instanceof Object && element.dir != undefined) ? element.dir : undefined;
+           directory.dir = (element instanceof Object && element.dir != undefined) ? element.dir : this.path;
             if(data.key == undefined || data.change == undefined) return console.error("You must provide information needed to update files."); // if function is empty
              if(element instanceof Object && element.name != undefined && element.content != undefined) { // run collect-type function for updates
               if((element.name && !element.content) || (!element.name && element.content)) return console.error("Unable to locate file with missing field. ('name' or 'content')");
               files = fs.readdirSync(`${directory.dir}`);
                  files.forEach((file) => {
                      let target = fs.readFileSync(`${directory.dir}${file}`);
-                      target = JSON.parse(target); target = target[0];
+                      target = JSON.parse(target); 
+                    if(target.length > 1) {
+                        let fil = target.filter(i => {
+                            i[element.name] && i[element.name] == element.content
+                        });
+                         if(fil) { // If identified as an ARRAY
+                            target.forEach(i => {
+                                if(i[data.key]) {
+                                    if(data.math == true) {
+                                        if(data.child) {
+                                            if(isNaN(Number((i[data.key])[data.child]) || isNaN(Number(data.change)))) return console.error("Unable to update file due to given key, key's child, or change returning NaN.");
+                                             (i[data.key])[data.child] = Number((i[data.key])[data.child]) + (Number(data.change));
+                                              target = JSON.stringify(target);
+                                               fs.writeFileSync(`${directory.dir}${file}`, target);
+                                        } else {
+                                            if(isNaN(Number((i[data.key])) || isNaN(Number(data.change)))) return console.error("Unable to update file due to given key, key's child, or change returning NaN.");
+                                             i[data.key] = Number(i[data.key]) + (Number(data.change));
+                                              target = JSON.stringify(target);
+                                               fs.writeFileSync(`${directory.dir}${file}`, target);
+                                        }
+                                    } else {
+                                        if(data.child) {
+                                            (i[data.key])[data.child] = (data.change == "true" ? true : data.change == "false" ? false : data.change);
+                                             target = JSON.stringify(target);
+                                              fs.writeFileSync(`${directory.dir}${file}`, target);
+                                        } else {
+                                            i[data.key] = (data.change == "true" ? true : data.change == "false" ? false : data.change);
+                                             target = JSON.stringify(target);
+                                              fs.writeFileSync(`${directory.dir}${file}`, target);
+                                        }
+                                    }
+                                }
+                            })
+                            this.feedback == true ? console.log(`Successfully updated 1 bulk document. ( ${file} )`) : "";
+                         }
+                    } else {
+                      target = target[0];
                        if(target[element.name] && target[element.name] == element.content) {
                          if(data.math == true) {
                             if(data.child) {
-                                if(isNaN(Number((target[data.key])[data.child]) || isNaN(Number(data.change)))) return console.error("Unable to update file due to given element, element child, or change returning NaN.");
+                                if(isNaN(Number((target[data.key])[data.child]) || isNaN(Number(data.change)))) return console.error("Unable to update file due to given key, key's child, or change returning NaN.");
                                  (target[data.key])[data.child] = Number((target[data.key])[data.child]) + (Number(data.change));
                                   obj = [ target ]; obj = JSON.stringify(obj);
                                    fs.writeFileSync(`${directory.dir}${file}`, obj);
                             } else {
-                             if(isNaN(Number(target[data.key])) || isNaN(Number(data.change))) return console.error("Unable to update file due to given element or change returning NaN.");
-                             target[data.key] = Number(target[data.key] + (Number(data.change)));
+                             if(isNaN(Number(target[data.key])) || isNaN(Number(data.change))) return console.error("Unable to update file due to given key or change returning NaN.");
+                             target[data.key] = Number(target[data.key]) + (Number(data.change));
                                obj = [ target ]; obj = JSON.stringify(obj);
                                 fs.writeFileSync(`${directory.dir}${file}`, obj);
                             }
@@ -165,11 +202,47 @@ module.exports = class WastefulDB {
                          }
                          this.feedback == true ? console.log(`Successfully updated 1 document. ( ${file} )`) : "";
                        }
+                    }
                  })
              } else { // run standard update function
-              if(data.id == undefined || data.key == undefined || data.change == undefined) return console.error("One or more fields is incomplete. ('id', 'element', and/or 'change').");
+              if(data.id == undefined || data.key == undefined || data.change == undefined) return console.error("One or more fields is incomplete. ('id', 'key', and/or 'change').");
               data.id = (data.id).toString();
-                let file = fs.readFileSync(`${directory.dir}${data.id}.json`); file = JSON.parse(file); file = file[0];
+                let file = fs.readFileSync(`${directory.dir}${data.id}.json`); file = JSON.parse(file); 
+
+                if(file.length > 1) {
+                    let filt = file.filter(i => i[data.key]);
+                     if(!filt) { // Missing key if-else
+                        (filt[0])[data.key] = data.change;
+                           obj = [file]; obj = JSON.stringify(obj);
+                            fs.writeFileSync(`${directory.dir}${data.id}.json`, obj);
+                     } else {
+                        if(data.math == true) {
+                         if(data.child) {
+                            if(isNaN(Number(((filt[0])[data.key])[data.child]) || isNaN(Number(data.change)))) return console.error("Unable to update file due to given key, key's child, or change returning NaN.");
+                             ((filt[0])[data.key])[data.child] = Number(((filt[0])[data.key])[data.child]) + (Number(data.change));
+                              file = JSON.stringify(file);
+                               fs.writeFileSync(`${directory.dir}${data.id}.json`, file); 
+                         } else {
+                            if(isNaN(Number((filt[0])[data.key])) || isNaN(Number(data.change))) return console.error("Unable to update file due to given key or change returning NaN.");
+                            (filt[0])[data.key] = Number((filt[0])[data.key]) + (Number(data.change));
+                              file = JSON.stringify(file);
+                               fs.writeFileSync(`${directory.dir}${data.id}.json`, file);
+                         }
+                        } else {
+                            if(data.child) {
+                                ((filt[0])[data.key])[data.child] = (data.change == "true" ? true : data.change == "false" ? false : data.change);
+                                 file = JSON.stringify(file);
+                                  fs.writeFileSync(`${directory.dir}${data.id}.json`, file);
+                            } else {
+                                (filt[0])[data.key] = (data.change == "true" ? true : data.change == "false" ? false : data.change);
+                                 file = JSON.stringify(file);
+                                  fs.writeFileSync(`${directory.dir}${data.id}.json`, file);
+                            }
+                        }
+                     }
+                     this.feedback == true ? console.log("Successfully updated 1 bulk document.") : null;
+                } else {
+                file = file[0];
                  if(file[data.key] == null || undefined) { // Insert new field if the provided element does not exist
                   file[data.key] = data.change;
                    obj = [ file ]; obj = JSON.stringify(obj);
@@ -177,13 +250,13 @@ module.exports = class WastefulDB {
                  } else { // If element exists:
                   if(data.math == true) { // If math is set to true: 
                    if(data.child) {
-                    if(isNaN(Number((file[data.key])[data.child]) || isNaN(Number(data.change)))) return console.error("Unable to update file due to given element, element child, or change returning NaN.");
+                    if(isNaN(Number((file[data.key])[data.child]) || isNaN(Number(data.change)))) return console.error("Unable to update file due to given key, key's child, or change returning NaN.");
                     (file[data.key])[data.child] = Number((file[data.key])[data.child]) + (Number(data.change));
                      obj = [ file ]; obj = JSON.stringify(obj);
                       fs.writeFileSync(`${directory.dir}${file}`, obj);
                    } else {
-                   if(isNaN(Number(file[data.key])) || isNaN(Number(data.change))) return console.error("Unable to update file due to given element or change returning NaN.");
-                    file[data.key] = Number(file[data.key] + (Number(data.change)));
+                   if(isNaN(Number(file[data.key])) || isNaN(Number(data.change))) return console.error("Unable to update file due to given key or change returning NaN.");
+                    file[data.key] = Number(file[data.key]) + (Number(data.change));
                      obj = [ file ]; obj = JSON.stringify(obj);
                       fs.writeFileSync(`${directory.dir}${data.id}.json`, obj);
                    }
@@ -191,7 +264,6 @@ module.exports = class WastefulDB {
                     if(data.child) {
                         (file[data.key])[data.child] = (data.change == "true" ? true : data.change == "false" ? false : data.change);
                           obj = [file]; obj = JSON.stringify(obj);
-                            console.log(directory.dir);
                               fs.writeFileSync(`${directory.dir}${data.id}.json`, obj);
                     } else {
                    file[data.key] = (data.change == "true" ? true : data.change == "false" ? false : data.change);
@@ -201,6 +273,7 @@ module.exports = class WastefulDB {
                   }
                 }
               this.feedback == true ? console.log("Successfully updated 1 document.") : "";
+              }
              }
          }catch(err){
             if(this.kill == true) {
@@ -212,15 +285,15 @@ module.exports = class WastefulDB {
     }
 
     /**
-     * Reads each file within the directory, parses, pushes and returns an object of the information in each JSON file. Providing an id and/or element will filter through and push each file matching the profile.
+     * Reads each file within the directory, parses, pushes and returns an object of the information in each JSON file. Providing an id and/or key will filter through and push each file matching the profile.
      * @param {String} [data.id] The identifier stored within the file.
      * @param {String} [data.key] A key within a file's Object to search for.
-     * @param {String} [data.value] The value of an element to search for. An "element" is required to use this.
+     * @param {String} [data.value] The value of a key to search for. A "key" is required to use this.
      * 
      * @param {String} [directory.dir] Specific directory to collect file data from.
      * 
      * @example > db.collect({id: "1234"}, {dir: `${__dirname}/data/`});
-     * @example > db.collect({element: "name", value: "mick"});
+     * @example > db.collect({key: "name", value: "mick"});
      */
 
     collect(data, directory = {dir: this.path}) {
@@ -269,19 +342,31 @@ module.exports = class WastefulDB {
     /**
      * Search the given directory for a specified identifier regardless of file name.
      * @param {String} data Identifier to scan for in each file.
-     * @param {String} [directory.dir] Specific directory to search for a file.
-     * @example > db.get({id: "1234"}, {dir: `${__dirname}/data/`}, (result) => { console.log(result); });
+     * @param {String} [data.dir] Specific directory to search for a file.
+     * @example > db.get({id: "1234", dir: `${__dirname}/data/`}, (result) => { console.log(result); });
      */
 
-    get(data, directory = {dir: this.path}, callback) {
+    get(data = {id, dir}, callback) {
+      data.dir == undefined ? data.dir = this.path : data.dir;
         try {
         let end = false;
         if(!(data instanceof Object)) return new Error("Unable to perform 'get' function due to 'data' variable not containing Object with query.");
-           let files = fs.readdirSync(`${directory.dir}`)
+                let files = fs.readdirSync(`${data.dir}`)
                  files.forEach(file => {
                     if(end == true) return;
-                     let info = fs.readFileSync(`${directory.dir}${file}`)
-                          let obj = JSON.parse(info); obj = obj[0];
+                     let info = fs.readFileSync(`${data.dir}${file}`)
+                          let obj = JSON.parse(info); 
+                       if(obj.length > 1) { 
+                        let find = obj.filter(i => i["id"]);
+                         if(find) {
+                             if(find[0].id == (data.id || data)) {
+                                 this.feedback == true ? console.log("Successfully retrieved 1 document.") : "";
+                                  end = true;
+                                   return callback(obj);
+                             }
+                         }
+                       } else {
+                          obj = obj[0];
                           let dataAtt = Object.entries(data); dataAtt = dataAtt[0];
                            if(!obj) return new Error("File abnormality occurred whilst attempting to read.\nFile name: " + file);
                         if(!data.id) {
@@ -304,6 +389,7 @@ module.exports = class WastefulDB {
                                 return;
                             }
                         }
+                    }
                  })
                  if(end == false) {
                      this.feedback == true ? console.log("Unable to retrieve any documents pertaining to the given query.") : "";
@@ -379,7 +465,7 @@ module.exports = class WastefulDB {
     * Update several files at the same time with the same information provided.
     * @param {Array} identifier An array of identifiers to modify.
     * 
-    * @param {String} options.key The name of an Object's key to modify. (aka element)
+    * @param {String} options.key The name of an Object's key to modify.
     * @param {String} options.child A following key within the specified Object.
     * @param {String} options.change The change to make to an Object.
     * @param {Boolean} options.math Does the change require SIMPLE math?
@@ -388,7 +474,7 @@ module.exports = class WastefulDB {
     */
 
     updateMass(identifier = [], options = {key, child, change, math}, directory = {dir: this.path}) {
-      if(!(identifier instanceof Array) || identifier.length == 0) return console.log("You must provide multiple identifiers to use this function.");
+      if(!(identifier instanceof Array)) return console.log("You must provide an identifier or identifiers within an Array.");
        if(options.key == undefined || (options.key).length == 0) return console.log("An Object's key is required at 'options.key'."); if(options.change == undefined || (options.change).length == 0) return console.log("Unable to update due to missing input at 'options.change.");
         try {
             let foo, bar, c=0;
