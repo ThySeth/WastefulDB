@@ -5,7 +5,7 @@ A little custom made, document-oriented database project made with JavaScript an
 ### Setup
 ```js
 const Wasteful = require('wastefuldb');
-const db = new Wasteful({feedback: true, path: `${__dirname}/data/`, serial: true});
+const db = new Wasteful({feedback: false, path: `${__dirname}/data/`, serial: false, kill: false});
 ```
 
 ### Overall Requirements:
@@ -29,11 +29,12 @@ ___
 
 ### In Depth
 ```js
-new Wasteful({feedback: true, path: `${__dirname}/info/`, serial: false});
+new Wasteful({feedback: true, path: `${__dirname}/info/`, serial: false, kill: false});
 ```
 * feedback - Sends a confirmation via console when a function is executed successfully. (__default__: false)
 * path - Provide a custom path where you wish JSON files to be written/read. (__default__: .../wastefuldb/data/)
 * serial - Automatically assigns filenames/identifiers based on the size of the set path. (__default__: false)
+* kill - When set to true, the process will be kill when an error occurs in a try/catch statement. (__defualt__: false)
 
 ___
 
