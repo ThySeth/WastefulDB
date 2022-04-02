@@ -1,6 +1,4 @@
-const { info } = require('console');
 const fs = require('fs');
-
 
 module.exports = class WastefulDB {
     /**
@@ -36,7 +34,7 @@ module.exports = class WastefulDB {
               fs.writeFileSync(`${directory.dir}${data._id || data.id}.json`, obj);
                this.feedback == true ? console.log(`Successfully created 1 document. ( ${data._id || data.id}.json )`) : "";
         } else {
-         if(!data.id) return console.log("Cannot create document without valid 'id' key and value.");
+         if(!data.id) return console.log("Cannot create document without a valid 'id' key and value.");
          obj = [data]
           obj = JSON.stringify(obj);
            fs.writeFileSync(`${directory.dir}${data.id}.json`, obj);
@@ -162,10 +160,12 @@ module.exports = class WastefulDB {
                                     } else {
                                         if(data.child) {
                                             (i[data.key])[data.child] = (data.change == "true" ? true : data.change == "false" ? false : data.change);
+                                            data.change == "undefined" ? delete (i[data.key])[data.child] : "";
                                              target = JSON.stringify(target);
                                               fs.writeFileSync(`${directory.dir}${file}`, target);
                                         } else {
                                             i[data.key] = (data.change == "true" ? true : data.change == "false" ? false : data.change);
+                                            data.change == "undefined" ? delete i[data.key] : "";
                                              target = JSON.stringify(target);
                                               fs.writeFileSync(`${directory.dir}${file}`, target);
                                         }
@@ -192,10 +192,12 @@ module.exports = class WastefulDB {
                          } else {
                           if(data.child) {
                               (target[data.key])[data.child] = (data.change == "true" ? true : data.change == "false" ? false : data.change);
+                              data.change == "undefined" ? delete (target[data.key])[data.child] : "";
                                obj = [target]; obj = JSON.stringify(obj);
                                 fs.writeFileSync(`${directory.dir}${file}`, obj);
                           } else {
                             target[data.key] = (data.change == "true" ? true : data.change == "false" ? false : data.change);
+                            data.change == "undefined" ? delete target[data.key] : "";
                              obj = [ target ]; obj = JSON.stringify(obj);
                               fs.writeFileSync(`${directory.dir}${file}`, obj);
                           }
@@ -231,10 +233,12 @@ module.exports = class WastefulDB {
                         } else {
                             if(data.child) {
                                 ((filt[0])[data.key])[data.child] = (data.change == "true" ? true : data.change == "false" ? false : data.change);
-                                 file = JSON.stringify(file);
+                               data.change == "undefined" ? delete ((filt[0])[data.key])[data.child] : "";  
+                                file = JSON.stringify(file);
                                   fs.writeFileSync(`${directory.dir}${data.id}.json`, file);
                             } else {
                                 (filt[0])[data.key] = (data.change == "true" ? true : data.change == "false" ? false : data.change);
+                                data.change == "undefined" ? delete (filt[0])[data.key] : "";
                                  file = JSON.stringify(file);
                                   fs.writeFileSync(`${directory.dir}${data.id}.json`, file);
                             }
@@ -263,10 +267,12 @@ module.exports = class WastefulDB {
                  } else { // If math is set to false:
                     if(data.child) {
                         (file[data.key])[data.child] = (data.change == "true" ? true : data.change == "false" ? false : data.change);
+                        data.change == "undefined" ? delete (file[data.key])[data.child] : "";
                           obj = [file]; obj = JSON.stringify(obj);
                               fs.writeFileSync(`${directory.dir}${data.id}.json`, obj);
                     } else {
                    file[data.key] = (data.change == "true" ? true : data.change == "false" ? false : data.change);
+                   data.change == "undefined" ? delete file[data.key] : "";
                     obj = [ file ]; obj = JSON.stringify(obj);
                      fs.writeFileSync(`${directory.dir}${data.id}.json`, obj);
                      }
@@ -484,11 +490,13 @@ module.exports = class WastefulDB {
                  foo = JSON.parse(foo); foo = foo[0]
                  if(options.math == false) {
                   if(options.child == undefined) {
-                  foo[options.key] = (options.change == "true" ? true : options.change == "false" ? false : options.change)
+                  foo[options.key] = (options.change == "true" ? true : options.change == "false" ? false : options.change);
+                  options.change == "undefined" ? delete foo[options.key] : "";
                    bar = JSON.stringify([foo]);
                     fs.writeFileSync(`${directory.dir}${id}.json`, bar);
                   } else {
                       (foo[options.key])[options.child] = (options.change == "true" ? true : options.change == "false" ? false : options.change);
+                      options.change == "undefined" ? delete (foo[options.key])[options.child] : "";
                        bar = JSON.stringify([foo]);
                         fs.writeFileSync(`${directory.dir}${id}.json`, bar);
                   }
