@@ -18,7 +18,7 @@ const db = new Wasteful({feedback: false, path: `${__dirname}/data/`, serial: fa
 - [In Depth](#in-depth)
   - [Specify Directories](#specify-directories)
   - [Insert Documents](#insert)
-  - [Insert Bulk Documents](#insertBulk)
+  - [Insert Bulk Documents](#insertbulk)
   - [Find Documents](#find)
   - ["Get" Documents](#get)
   - [Update via IDs](#update-by-identifier)
@@ -88,7 +88,7 @@ db.get({id: "4321", dir: `${__dirname}/data/`}, async(res) => { console.log(awai
 ___
 
 ## .update() (by identifier)
-#### Update a specific key within the specified file. If the key within the file doesn't exist, the function will automatically add the key as well as what was going to be changed. Not recommended when serialization is enabled.
+#### Searches the given or specified directory for the given ID and updates the given "key" with your "change". Set math to true for __simple__ math. Set the change to "undefined" to delete the specified key. A key which doesn't exist will be added automatically. Not recommended when serialization is enabled.
 ```js
 db.update({id: "1234", key: "id", change: "4321", math: false});
 ```
