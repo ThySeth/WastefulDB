@@ -25,6 +25,7 @@ const db = new Wasteful({feedback: false, path: `${__dirname}/data/`, serial: fa
   - [Update via Key Content](#update-by-key-content)
   - [Update via Child Key](#update-child-key)
   - [Collect Documents](#collectid-key-value)
+  - [Replicate Documents](#replicateid-to-from-force)
 
 ___
 
@@ -32,10 +33,10 @@ ___
 ```js
 new Wasteful({feedback: true, path: `${__dirname}/info/`, serial: false, kill: false});
 ```
-* feedback - Sends a confirmation via console when a function is executed successfully. (__default__: false)
-* path - Provide a custom path where you wish JSON files to be written/read. (__default__: .../wastefuldb/data/)
-* serial - Automatically assigns filenames/identifiers based on the size of the set path. (__default__: false)
-* kill - When set to true, the process will be kill when an error occurs in a try/catch statement. (__defualt__: false)
+* feedback - Sends a confirmation via console when a function is executed successfully. (__default__: `false`)
+* path - Provide a custom path where you wish JSON files to be written/read. (__default__: `./wastefuldb/data/`)
+* serial - Automatically assigns filenames/identifiers based on the size of the set path. (__default__: `false`)
+* kill - When set to true, the process will be kill when an error occurs in a try/catch statement. (__defualt__: `false`)
 
 ___
 
@@ -154,3 +155,16 @@ data.forEach(info => {
   }
 })
 ```
+
+___
+
+## .replicate(id, {to?, from?, force?})
+#### Create a copy of a specified document from a given directory and place it within the given destination directory. Only one file can exist in a directory at a time.
+```js
+db.replicate("1234", {to: __dirname, from: `${__dirname}/data/`);
+db.replicate("1234", {force: true});
+```
+* id - The identifier of the file which is going to be replicated.
+* to - What directory to place the replicated file. (__default__: `constructor.path`)
+* from - Which directory to find the file which is being replicated. (__default__: `constructor.path`)
+* force - Forces the function to replicate the file within the same directory. The file will have a suffix of "\_rep". (__default__: `false`)
