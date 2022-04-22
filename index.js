@@ -1,6 +1,6 @@
 const fs = require('fs');
 
-module.exports = class WastefulDB {
+class WastefulDB {
     /**
      * @param {Boolean} options.feedback Provides confirmation via the console each time most of the functions successfully execute. (default: false)
      * @param {String} options.path Provide a custom directory to route each JSON file. Ignoring this will default read/write to ".../wastefuldb/data/"
@@ -210,7 +210,6 @@ module.exports = class WastefulDB {
               if(data.id == undefined || data.key == undefined || data.change == undefined) return console.error("One or more fields is incomplete. ('id', 'key', and/or 'change').");
               data.id = (data.id).toString();
                 let file = fs.readFileSync(`${directory.dir}${data.id}.json`); file = JSON.parse(file); 
-
                 if(file.length > 1) {
                     let filt = file.filter(i => i[data.key]);
                      if(!filt) { // Missing key if-else
@@ -305,7 +304,7 @@ module.exports = class WastefulDB {
     collect(data, directory = {dir: this.path}) {
      let obj = []
         try {
-        if(!data) {
+        if(data == null || !data) {
            let files = fs.readdirSync(`${directory.dir}`);
             files.forEach(file => {
                 let info = fs.readFileSync(`${directory.dir}${file}`); if(!obj) return new Error("File abnormality ocurred whilst attempting to read a file.\nFile name: " + file)
@@ -526,6 +525,42 @@ module.exports = class WastefulDB {
         }
     }
 
+
+
+    /**
+     * Replicate a specified document and its contents. Does not allow for more than one replication of a file per directory.
+     * @param id The file name aka identifier of a document.
+     * 
+     * @param options.to Where to create the new document.
+     * @param options.from Where to search for and replicate the document from.
+     * 
+     * @example > db.replicate("1234", {to: __dirname, from: `${__dirname}/data/`})
+     */
+    replicate(id, options = {to: this.path, from: this.path, force: false}) {
+      options.to = options.to || this.path;
+      options.from = options.from || this.path;
+      options.force = options.force || false;
+     try {
+      if(!id) return console.log("An identifier of a file to replicate must be provided.");
+      if(fs.existsSync(`${options.to}/${id}.json`) > 0 && options.force == false) return console.log(`The provided document already exists in the directory "${options.to}". Move or delete the document in order to replicate again.`);
+      if(fs.existsSync(`${options.to}/${id}.json`) > 0 && options.force == true) {
+      if(fs.existsSync(`${options.to}/${id}_rep.json`) == true) return console.log(`Document "${options.from}/${id}.json" has already been replicated at the target destination.`);
+       let _data = fs.readFileSync(`${options.from}/${id}.json`);
+        fs.writeFileSync(`${options.to}/${id}_rep.json`, _data);
+         this.feedback == true ? console.log(`Successfully forced replication of 1 document. ( ${options.from}/${id}.json > ${options.to}/${id}_rep.json )`) : "";
+      } else {
+       let data = fs.readFileSync(`${options.from}/${id}.json`);
+        fs.writeFileSync(`${options.to}/${id}.json`, data);
+         this.feedback == true ? console.log(`Successfully replicated 1 document.`) : "";
+      }
+     } catch(err) {
+       if(this.kill == true) {
+         throw new Error(err.message);
+       } else {
+         console.log("Error: " + err.message);
+       }
+     }
+    }
 }
 
-module.exports.wastefuldb;
+module.exports = WastefulDB;
