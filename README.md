@@ -15,6 +15,7 @@ const db = new Wasteful({feedback: false, path: `${__dirname}/data/`, serial: fa
 ### Table of Content
 - [Setup](#setup)
 - [Requirements](#overall-requirements)
+- [To-Do List (GitHub)](https://github.com/ThySeth/WastefulDB/blob/main/TODO.md)
 - [In Depth](#in-depth)
   - [Specify Directories](#specify-directories)
   - [Insert Documents](#insert)
