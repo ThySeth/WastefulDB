@@ -10,4 +10,6 @@
 
 - [ ] Check if there is better formatting for the custom directory option.
 
+- [ ] Find a way to remember to update README.md in npm package
+
 - [x] Make a to-do list.
