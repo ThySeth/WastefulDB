@@ -10,6 +10,4 @@
 
 - [ ] Check if there is better formatting for the custom directory option.
 
-- [ ] Create an internal queue to prevent file changes from overlapping such as in .insert().
-
 - [x] Make a to-do list.
