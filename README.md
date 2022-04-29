@@ -25,6 +25,7 @@ const db = new Wasteful({feedback: false, path: `${__dirname}/data/`, serial: fa
   - [Update via IDs](#update-by-identifier)
   - [Update via Key Content](#update-by-key-content)
   - [Update via Child Key](#update-child-key)
+  - [Update by Mass](#updatemassid-options)
   - [Collect Documents](#collectid-key-value)
   - [Replicate Documents](#replicateid-to-from-force)
 
@@ -110,18 +111,6 @@ db.update({key: "age", change: 1, math: true}, {name: "animal", content: "fox"})
 * content - The contents to be matched with the contents of the given key.
 
 ___
-
-## .updateMass(id, options)
-#### Provide an array of identifiers to search and update all files with the given information. updateMass() supports the "child" option.
-```js
-db.updateMass(["2", "3", "4"], {key: "age", change: -1, math: true});
-```
-* [identifiers] - An array of identifiers to find and update the given information.
-* key - (aka element) The name of a key within an Object to modify.
-* change - The change to make to the key.
-
-___
-
 
 ## .update() (child key)
 #### Update the value of a key's "child" or sub-value of the given key. "Child" is referred to as a nested collection key/value within your file.
