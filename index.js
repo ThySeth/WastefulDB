@@ -100,7 +100,8 @@ class WastefulDB {
         let info = fs.readFileSync(`${directory.dir}${data.id || data}.json`);
           info = JSON.parse(info);
           this.feedback == true ? console.log("Successfully found 1 document.") : "";
-           return info[0];
+          info = info.length > 1 ? info : info[0];
+           return info;
       } catch(err) {
         if(this.kill == true) {
           throw new Error(err.message);
@@ -126,7 +127,7 @@ class WastefulDB {
      * @example > db.update({id: "1234", key: "name", child: "first", change: "Seth", math: false}, {dir: `${__dirname}/data/`});
      * @example > db.update({key: "age", change: 2, math: true}, {name: "animal", content: "ape"});
      */
-
+    
     update(data = {id, key, child, change, math:false}, element = {name:undefined, content:undefined, dir: undefined}, directory = {dir: this.path}) { 
         let obj, files;
          try {
@@ -308,7 +309,8 @@ class WastefulDB {
            let files = fs.readdirSync(`${directory.dir}`);
             files.forEach(file => {
                 let info = fs.readFileSync(`${directory.dir}${file}`); if(!obj) return new Error("File abnormality ocurred whilst attempting to read a file.\nFile name: " + file)
-                 info = JSON.parse(info); info = info[0];
+                 info = JSON.parse(info); 
+                 info = info.length > 1 ? info : info[0]
                   obj.push(info);
             });
              return obj;
@@ -562,5 +564,6 @@ class WastefulDB {
      }
     }
 }
+
 
 module.exports = WastefulDB;
