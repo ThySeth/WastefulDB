@@ -4,7 +4,7 @@
 
 - [ ] Synchronously performing multiple updates within one .update() function.
 
-- [ ] Clean up or retype .update() function.
+- [ ] ~~Clean up or retype .update() function.~~
 
 - [ ] Review function descriptors.
 
