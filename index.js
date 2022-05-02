@@ -133,7 +133,8 @@ class WastefulDB {
          try {
            directory.dir = (element instanceof Object && element.dir != undefined) ? element.dir : this.path;
             if(data.key == undefined || data.change == undefined) return console.error("You must provide information needed to update files."); // if function is empty
-             if(element instanceof Object && element.name != undefined && element.content != undefined) { // run collect-type function for updates
+             if(element instanceof Object && element.name != undefined && element.content != undefined) { 
+              // run collect-type function for updates
               if((element.name && !element.content) || (!element.name && element.content)) return console.error("Unable to locate file with missing field. ('name' or 'content')");
               files = fs.readdirSync(`${directory.dir}`);
                  files.forEach((file) => {
@@ -211,8 +212,9 @@ class WastefulDB {
               if(data.id == undefined || data.key == undefined || data.change == undefined) return console.error("One or more fields is incomplete. ('id', 'key', and/or 'change').");
               data.id = (data.id).toString();
                 let file = fs.readFileSync(`${directory.dir}${data.id}.json`); file = JSON.parse(file); 
-                if(file.length > 1) {
-                    let filt = file.filter(i => i[data.key]);
+                if(file.length > 1) { // run insertBulk update
+                    let filt = file.findIndex(ob => ob[data.key] != undefined);
+                     filt = filt >= 0 ? [file[filt]] : undefined;
                      if(!filt) { // Missing key if-else
                         (filt[0])[data.key] = data.change;
                            obj = [file]; obj = JSON.stringify(obj);
