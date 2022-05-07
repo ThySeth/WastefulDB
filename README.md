@@ -9,8 +9,8 @@ const db = new Wasteful({feedback: false, path: `${__dirname}/data/`, serial: fa
 ```
 
 ### Overall Requirements:
-- `NodeJS v14.17.6 or higher`
-- `NPM v6.14.15 or higher`
+- `NodeJS v16.15.0 or higher`
+- `NPM v8.5.5 or higher`
 
 ### Table of Content
 - [Setup](#setup)
