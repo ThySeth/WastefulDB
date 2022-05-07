@@ -2,10 +2,10 @@ const fs = require('fs');
 
 class WastefulDB {
     /**
-     * @param {Boolean} options.feedback Provides confirmation via the console each time most of the functions successfully execute. (default: false)
-     * @param {String} options.path Provide a custom directory to route each JSON file. Ignoring this will default read/write to ".../wastefuldb/data/"
-     * @param {Boolean} options.serial When true, you are no longer required to include an id variable to your file data. Instead, the identifier is based on the directory size at the time. (default: false)
-     * @param {Boolean} options.kill When an error occurs and option set to true, automatically kills the process to prevent further errors. (default: false)
+     * @param {Boolean} options.feedback Provides a confirmation message when a function executes successfully. (default: `false`)
+     * @param {String} options.path Provide a custom directory to route each JSON file. Ignoring this will default read/write to "`./wastefuldb/data/`"
+     * @param {Boolean} options.serial When **true**, you are no longer required to include an id variable to your file data. Instead, the identifier is based on the **directory size** at the time. (default: `false`)
+     * @param {Boolean} options.kill When an error occurs and the option is set to **true**, automatically kills the process to prevent further errors. (default: `false`)
      */
     constructor(options = {feedback, path, serial, kill}) {
         this.feedback = options.feedback || false
@@ -17,9 +17,9 @@ class WastefulDB {
     }
 
     /**
-     * Create a JSON file containing organized and modifiable information to be retrieved later.
-     * @param {String} data.id A required identifier (unless serial=true) to name and track the file.
-     * @param {String} [directory.dir] Specific directory to insert new data files into.
+     * Create a JSON file with the given object of data to be modified later.
+     * @param {String} data.id A required identifier to name and track the file.
+     * @param {String} [directory.dir] A specific directory to route the creation of files.
      * 
      * @example > db.insert({id: "5523", name: "Margot", pass: "HelloWorld~", active: false}, {dir: `${__dirname}/data/`});
      */
@@ -112,12 +112,12 @@ class WastefulDB {
     }
 
     /**
-     * Find and update a specified key within a file. Set "math" to be true for SIMPLE math.
+     * Find and update a specific file within the given or default directory.
      * @param {String} data.id Identifier of the target file to update.
-     * @param {String} [data.key] The key OR parent of a child key in an Object.
+     * @param {String} [data.key] The key **OR** parent of a child-key in an Object.
      * @param {String} [data.child] The child of the specified key.
      * @param {String} data.change Changes to be made to the target key.
-     * @param {Boolean} [data.math=false] Whether the change requires simple math or not. (Default: false)
+     * @param {Boolean} [data.math=false] Whether the change requires **SIMPLE** math or not. (Default: false)
      * 
      * @param {String} [element.name] The name of the field to search for and compare to the provided 'content'.
      * @param {String} [element.content] The contents of the previously given field in order to find a specific file.
@@ -293,7 +293,7 @@ class WastefulDB {
     }
 
     /**
-     * Reads each file within the directory, parses, pushes and returns an object of the information in each JSON file. Providing an id and/or key will filter through and push each file matching the profile.
+     * Reads each file within the directory and returns an array of objects with the information in each JSON file. Providing an id and/or key will filter through and push each file matching the profile.
      * @param {String} [data.id] The identifier stored within the file.
      * @param {String} [data.key] A key within a file's Object to search for.
      * @param {String} [data.value] The value of a key to search for. A "key" is required to use this.
@@ -413,7 +413,7 @@ class WastefulDB {
     }
 
     /**
-     * Function is intended to save on "resources" by returning boolean values rather than committing to the process of retrieving, parsing, and returning file data.
+     * Check a given or default directory for a document and returns boolean if it exists or not. Intended to save resources when verifying files.
      * 
      * @param {Object | String} data Provide the identifier of a file to view if it currently exists.
      * @param {String} [directory.dir] Specific directory to check for an existing file.
@@ -430,7 +430,7 @@ class WastefulDB {
     }
 
     /**
-     * Returns the total amount of files in the default or given directory where data is read/written.
+     * Returns the total amount of files in the default or given directory where documents are read/written.
      * @param {String} [directory.dir] Specific directory to retrieve the file count from.
      * 
      * @example > db.size({dir: `${__dirname}/data/`});
@@ -450,7 +450,7 @@ class WastefulDB {
     }
 
     /**
-     * Deletes the specified JSON file.
+     * Deletes the specified document.
      * @param {Object | String} data Identifier of the file.
      * @param {String} [directory.dir] Specific directory to delete a file from.
      * 
@@ -532,7 +532,7 @@ class WastefulDB {
 
 
     /**
-     * Replicate a specified document and its contents. Does not allow for more than one replication of a file per directory.
+     * Replicate a specified document and its contents. Does not allow for more than one replication of a document per directory.
      * @param id The file name aka identifier of a document.
      * 
      * @param options.to Where to create the new document.
@@ -565,6 +565,8 @@ class WastefulDB {
        }
      }
     }
+
+    
 }
 
 
