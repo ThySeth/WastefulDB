@@ -128,91 +128,14 @@ class WastefulDB {
      * @example > db.update({key: "age", change: 2, math: true}, {name: "animal", content: "ape"});
      */
     
-    update(data = {id, key, child, change, math:false}, element = {name:undefined, content:undefined, dir: undefined}, directory = {dir: this.path}) { 
+    update(data = {id, key, child, change, math:false}, directory = {dir: this.path}) { 
         let obj, files;
          try {
-           directory.dir = (element instanceof Object && element.dir != undefined) ? element.dir : this.path;
             if(data.key == undefined || data.change == undefined) return console.error("You must provide information needed to update files."); // if function is empty
-             if(element instanceof Object && element.name != undefined && element.content != undefined) { 
-              // run collect-type function for updates ^^^^
-              if((element.name && !element.content) || (!element.name && element.content)) return console.error("Unable to locate file with missing field. ('name' or 'content')");
-              files = fs.readdirSync(`${directory.dir}`);
-                 files.forEach((file) => {
-                     let target = fs.readFileSync(`${directory.dir}${file}`);
-                      target = JSON.parse(target); 
-                    if(target.length > 1) {
-                        let fil = target.filter(i => {
-                            i[element.name] && i[element.name] == element.content
-                        });
-                         if(fil) { // If identified as an ARRAY
-                            target.forEach(i => {
-                                if(i[data.key]) {
-                                    if(data.math == true) {
-                                        if(data.child) {
-                                            if(isNaN(Number((i[data.key])[data.child]) || isNaN(Number(data.change)))) return console.error("Unable to update file due to given key, key's child, or change returning NaN.");
-                                             (i[data.key])[data.child] = Number((i[data.key])[data.child]) + (Number(data.change));
-                                              target = JSON.stringify(target);
-                                               fs.writeFileSync(`${directory.dir}${file}`, target);
-                                        } else {
-                                            if(isNaN(Number((i[data.key])) || isNaN(Number(data.change)))) return console.error("Unable to update file due to given key, key's child, or change returning NaN.");
-                                             i[data.key] = Number(i[data.key]) + (Number(data.change));
-                                              target = JSON.stringify(target);
-                                               fs.writeFileSync(`${directory.dir}${file}`, target);
-                                        }
-                                    } else {
-                                        if(data.child) {
-                                            (i[data.key])[data.child] = (data.change == "true" ? true : data.change == "false" ? false : data.change);
-                                            data.change == "undefined" ? delete (i[data.key])[data.child] : "";
-                                             target = JSON.stringify(target);
-                                              fs.writeFileSync(`${directory.dir}${file}`, target);
-                                        } else {
-                                            i[data.key] = (data.change == "true" ? true : data.change == "false" ? false : data.change);
-                                            data.change == "undefined" ? delete i[data.key] : "";
-                                             target = JSON.stringify(target);
-                                              fs.writeFileSync(`${directory.dir}${file}`, target);
-                                        }
-                                    }
-                                }
-                            })
-                            this.feedback == true ? console.log(`Successfully updated 1 bulk document. ( ${file} )`) : "";
-                         }
-                    } else {
-                      target = target[0];
-                       if(target[element.name] && target[element.name] == element.content) {
-                         if(data.math == true) {
-                            if(data.child) {
-                                if(isNaN(Number((target[data.key])[data.child]) || isNaN(Number(data.change)))) return console.error("Unable to update file due to given key, key's child, or change returning NaN.");
-                                 (target[data.key])[data.child] = Number((target[data.key])[data.child]) + (Number(data.change));
-                                  obj = [ target ]; obj = JSON.stringify(obj);
-                                   fs.writeFileSync(`${directory.dir}${file}`, obj);
-                            } else {
-                             if(isNaN(Number(target[data.key])) || isNaN(Number(data.change))) return console.error("Unable to update file due to given key or change returning NaN.");
-                             target[data.key] = Number(target[data.key]) + (Number(data.change));
-                               obj = [ target ]; obj = JSON.stringify(obj);
-                                fs.writeFileSync(`${directory.dir}${file}`, obj);
-                            }
-                         } else {
-                          if(data.child) {
-                              (target[data.key])[data.child] = (data.change == "true" ? true : data.change == "false" ? false : data.change);
-                              data.change == "undefined" ? delete (target[data.key])[data.child] : "";
-                               obj = [target]; obj = JSON.stringify(obj);
-                                fs.writeFileSync(`${directory.dir}${file}`, obj);
-                          } else {
-                            target[data.key] = (data.change == "true" ? true : data.change == "false" ? false : data.change);
-                            data.change == "undefined" ? delete target[data.key] : "";
-                             obj = [ target ]; obj = JSON.stringify(obj);
-                              fs.writeFileSync(`${directory.dir}${file}`, obj);
-                          }
-                         }
-                         this.feedback == true ? console.log(`Successfully updated 1 document. ( ${file} )`) : "";
-                       }
-                    }
-                 })
-             } else { // run standard update function
               if(data.id == undefined || data.key == undefined || data.change == undefined) return console.error("One or more fields is incomplete. ('id', 'key', and/or 'change').");
               data.id = (data.id).toString();
                 let file = fs.readFileSync(`${directory.dir}${data.id}.json`); file = JSON.parse(file); 
-                if(file.length > 1) { // run insertBulk update
+                if(file.length > 1) { // If document was created by insertBulk()
                     let filt = file.findIndex(ob => ob[data.key] != undefined);
                      filt = filt >= 0 ? [file[filt]] : undefined;
                      if(!filt) { // Missing key if-else
@@ -221,20 +144,22 @@ class WastefulDB {
                            obj = file; obj = JSON.stringify(obj);
                             fs.writeFileSync(`${directory.dir}${data.id}.json`, obj);
                      } else {
-                        if(data.math == true) {
-                         if(data.child) {
+                        if(data.math == true) { // math = true?
+                         if(data.child) { // data has a key-child?
                             if(isNaN(Number(((filt[0])[data.key])[data.child]) || isNaN(Number(data.change)))) return console.error("Unable to update file due to given key, key's child, or change returning NaN.");
                              ((filt[0])[data.key])[data.child] = Number(((filt[0])[data.key])[data.child]) + (Number(data.change));
+                             ((filt[0])[data.key])[data.child] = ((filt[0])[data.key])[data.child] % 1 != 0 ? parseFloat((((filt[0])[data.key])[data.child]).toFixed(2)) : ((filt[0])[data.key])[data.child];
                               file = JSON.stringify(file);
                                fs.writeFileSync(`${directory.dir}${data.id}.json`, file); 
                          } else {
                             if(isNaN(Number((filt[0])[data.key])) || isNaN(Number(data.change))) return console.error("Unable to update file due to given key or change returning NaN.");
                             (filt[0])[data.key] = Number((filt[0])[data.key]) + (Number(data.change));
+                            (filt[0])[data.key] = (filt[0])[data.key] % 1 != 0 ? parseFloat(((filt[0])[data.key]).toFixed(2)) : (filt[0])[data.key];
                               file = JSON.stringify(file);
                                fs.writeFileSync(`${directory.dir}${data.id}.json`, file);
                          }
-                        } else {
-                            if(data.child) {
+                        } else { // math = false?
+                            if(data.child) { // data has a key-child?
                                 ((filt[0])[data.key])[data.child] = (data.change == "true" ? true : data.change == "false" ? false : data.change);
                                data.change == "undefined" ? delete ((filt[0])[data.key])[data.child] : "";  
                                 file = JSON.stringify(file);
@@ -248,22 +173,24 @@ class WastefulDB {
                         }
                      }
                      this.feedback == true ? console.log("Successfully updated 1 bulk document.") : null;
-                } else {
+                } else { // If document was created with insert()
                 file = file[0];
-                 if(file[data.key] == null || undefined) { // Insert new field if the provided element does not exist
+                 if(file[data.key] == null || undefined) { // Insert new field if the provided key does not exist
                   file[data.key] = data.change;
                    obj = [ file ]; obj = JSON.stringify(obj);
                     fs.writeFileSync(`${directory.dir}${data.id}.json`, obj);
-                 } else { // If element exists:
+                 } else { // If key exists:
                   if(data.math == true) { // If math is set to true: 
                    if(data.child) {
                     if(isNaN(Number((file[data.key])[data.child]) || isNaN(Number(data.change)))) return console.error("Unable to update file due to given key, key's child, or change returning NaN.");
                     (file[data.key])[data.child] = Number((file[data.key])[data.child]) + (Number(data.change));
+                    (file[data.key])[data.child] = (file[data.key])[data.child] % 1 != 0 ? parseFloat(((file[data.key])[data.child]).toFixed(2)) : (file[data.key])[data.child];
                      obj = [ file ]; obj = JSON.stringify(obj);
                       fs.writeFileSync(`${directory.dir}${file}`, obj);
                    } else {
                    if(isNaN(Number(file[data.key])) || isNaN(Number(data.change))) return console.error("Unable to update file due to given key or change returning NaN.");
                     file[data.key] = Number(file[data.key]) + (Number(data.change));
+                    file[data.key] = file[data.key] % 1 != 0 ? parseFloat((file[data.key]).toFixed(2)) : file[data.key];
                      obj = [ file ]; obj = JSON.stringify(obj);
                       fs.writeFileSync(`${directory.dir}${data.id}.json`, obj);
                    }
@@ -283,7 +210,6 @@ class WastefulDB {
                 }
               this.feedback == true ? console.log("Successfully updated 1 document.") : "";
               }
-             }
          }catch(err){
             if(this.kill == true) {
                 throw new Error(err.message);
