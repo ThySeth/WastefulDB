@@ -22,10 +22,10 @@ const db = new Wasteful({feedback: false, path: `${__dirname}/data/`, serial: fa
   - [Insert Bulk Documents](#insertbulk)
   - [Find Documents](#find)
   - ["Get" Documents](#get)
-  - [Update via IDs](#update-by-identifier)
-  - [Update via Key Content](#update-by-key-content)
-  - [Update via Child Key](#update-child-key)
+  - [Update a Document](#update)
+  - [Update a Nested Object](#update-with-child-value)
   - [Update by Mass](#updatemassid-options)
+  - [Update via Key Content (Deprecated/Removed)](https://github.com/ThySeth/WastefulDB/commit/be7b497ecaa72b66e98a6155ff97e0bafea87625)
   - [Collect Documents](#collectid-key-value)
   - [Replicate Documents](#replicateid-to-from-force)
 
@@ -90,7 +90,7 @@ db.get({id: "4321", dir: `${__dirname}/data/`}, async(res) => { console.log(awai
 
 ___
 
-## .update() (by identifier)
+## .update()
 #### Searches the given or specified directory for the given ID and updates the given "key" with your "change". Set math to true for __simple__ math. Set the change to "undefined" to delete the specified key. A key which doesn't exist will be added automatically. Not recommended when serialization is enabled.
 ```js
 db.update({id: "1234", key: "id", change: "4321", math: false});
@@ -102,23 +102,11 @@ db.update({id: "1234", key: "id", change: "4321", math: false});
 
 ___
 
-## .update() (by key content)
-#### Searches through every file within the directory, attempting to match the key 'name' and it's 'content'. When found, updates the specified key within the file. Recommended when serialization is enabled.
+## .update() (with child value)
+#### Similar to the standard function, declaring a "child" key will update an object within another object aka nested objects. Everything else is the same.
 ```js
-db.update({key: "age", change: 1, math: true}, {name: "animal", content: "fox"});
+db.update({id: "5", key: "name", child: "last", change: "A."});
 ```
-* name - The name of an key within a file to check.
-* content - The contents to be matched with the contents of the given key.
-
-___
-
-## .update() (child key)
-#### Update the value of a key's "child" or sub-value of the given key. "Child" is referred to as a nested collection key/value within your file.
-```js
-db.update({key: "name", child: "first", change: "Mike", math: false}, {name: "animal", content: "fox"});
-```
-* key - The parent key within a file which houses the child key (i.e nested collection).
-* child - The child of the provided 'key' to be changed.
 
 ___
 
