@@ -97,7 +97,7 @@ class WastefulDB {
 
     find(data, directory = { dir: this.path }) {
       try {
-        let info = fs.readFileSync(`${directory.dir}${data.id || data}.json`);
+        let info = fs.readFileSync(`${directory.dir}${(data.id || data).toString()}.json`);
           info = JSON.parse(info);
           this.feedback == true ? console.log("Successfully found 1 document.") : "";
           info = info.length > 1 ? info : info[0];
@@ -118,10 +118,7 @@ class WastefulDB {
      * @param {String} [data.child] The child of the specified key.
      * @param {String} data.change Changes to be made to the target key.
      * @param {Boolean} [data.math=false] Whether the change requires **SIMPLE** math or not. (Default: false)
-     * 
-     * @param {String} [element.name] The name of the field to search for and compare to the provided 'content'.
-     * @param {String} [element.content] The contents of the previously given field in order to find a specific file.
-     * 
+     *
      * @param {String} [directory.dir] Specific directory to search for and update files. 
      *
      * @example > db.update({id: "1234", key: "name", child: "first", change: "Seth", math: false}, {dir: `${__dirname}/data/`});
@@ -295,7 +292,7 @@ class WastefulDB {
                        if(obj.length > 1) { 
                         let find = obj.filter(i => i["id"]);
                          if(find) {
-                             if(find[0].id == (data.id || data)) {
+                             if(find[0].id == (data.id || data).toString()) {
                                  this.feedback == true ? console.log("Successfully retrieved 1 document.") : "";
                                   end = true;
                                    return callback(obj);
@@ -350,7 +347,7 @@ class WastefulDB {
 
     check(data, directory = {dir: this.path}) {
       try {
-        return fs.existsSync(`${directory.dir}${data.id || data}.json`);
+        return fs.existsSync(`${directory.dir}${(data.id || data).toString()}.json`);
       } catch(err) {
         console.log("Error: " + err.message);
       }
@@ -386,7 +383,7 @@ class WastefulDB {
 
     delete(data, directory = {dir: this.path}) {
         try {
-            fs.rmSync(`${directory.dir}${data.id || data}.json`);
+            fs.rmSync(`${directory.dir}${(data.id || data).toString()}.json`);
              this.feedback == true ? console.log("Successfully deleted 1 document.") : "";
         } catch(err) {
           if(this.kill == true) {
@@ -416,7 +413,7 @@ class WastefulDB {
             let foo, bar, c=0;
               identifier.forEach(id => {
                c++;
-                foo = fs.readFileSync(`${directory.dir}${id}.json`);
+                foo = fs.readFileSync(`${directory.dir}${(id).toString()}.json`);
                  foo = JSON.parse(foo); foo = foo[0]
                  if(options.math == false) {
                   if(options.child == undefined) {
