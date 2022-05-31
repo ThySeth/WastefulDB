@@ -28,6 +28,8 @@ const db = new Wasteful({feedback: false, path: `${__dirname}/data/`, serial: fa
   - [Update via Key Content (Deprecated/Removed)](https://github.com/ThySeth/WastefulDB/commit/be7b497ecaa72b66e98a6155ff97e0bafea87625)
   - [Collect Documents](#collectid-key-value)
   - [Replicate Documents](#replicateid-to-from-force)
+  - [Overwrite Documents](#setid-data-dir)
+  - [Undo Updates](#undo)
 
 ___
 
@@ -146,3 +148,22 @@ db.replicate("1234", {force: true});
 * to - What directory to place the replicated file. (__default__: `constructor.path`)
 * from - Which directory to find the file which is being replicated. (__default__: `constructor.path`)
 * force - Forces the function to replicate the file within the same directory. The file will have a suffix of "\_rep". (__default__: `false`)
+
+___
+
+## .set(id, {data}, {dir});
+#### Overwrite a document completely, replacing the document data with the new data provided. The previous data is temporarily stored in a cache.
+```js
+db.set("1234", {name: "Seth R. Richardson", balance: 1000, insured: true}, {dir: __dirname});
+```
+* id - The identifier of the document to be overwritten.
+* data - The new data to be written in the document.
+* dir - A directory which contains the document to be updated.
+
+___
+
+## .undo();
+#### Undo the most recent update to a document. The cache holding the most recent change will be cleared if your program session ends.
+```js
+db.undo();
+```
