@@ -1,5 +1,5 @@
 const fs = require('fs');
-let cache;
+let cache = [];
 
 class WastefulDB {
     /**
@@ -31,13 +31,13 @@ class WastefulDB {
           let obj, altid=false, dirsize = fs.readdirSync(directory.dir); dirsize = dirsize.length;
         if(this.serial == true) {
             (data.id > 0) ? data._id = dirsize : data.id = dirsize;   data.id ? altid=true : altid;
-             obj = [ data ]; obj = JSON.stringify(obj);
+             obj = [ data ]; obj = JSON.stringify(obj, null, 3);
               fs.writeFileSync(`${directory.dir}${data._id || data.id}.json`, obj);
                this.feedback == true ? console.log(`Successfully created 1 document. ( ${data._id || data.id}.json )`) : "";
         } else {
          if(!data.id) return console.log("Cannot create document without a valid 'id' key and value.");
          obj = [data]
-          obj = JSON.stringify(obj);
+          obj = JSON.stringify(obj, null, 3);
            fs.writeFileSync(`${directory.dir}${data.id}.json`, obj);
            this.feedback == true ? console.log("Successfully created 1 document.") : "";
          }
@@ -75,7 +75,7 @@ class WastefulDB {
         })
         if(cancel == false) {
         let id = data.find(foo => foo.id); id = id.id;
-          let obj = JSON.stringify(data);
+          let obj = JSON.stringify(data, null, 3);
             fs.writeFileSync(`${directory.dir}${id}.json`, obj);
              this.feedback == true ? console.log("Successfully created 1 document.") : "";
         }
@@ -138,7 +138,7 @@ class WastefulDB {
                    if(!filt) { // Missing key if-else
                      filt = file;
                       (filt[file.length-1])[data.key] = data.change;
-                         obj = file; cache = file; cache.dir = directory.dir; obj = JSON.stringify(obj);
+                         obj = file; obj = JSON.stringify(obj, null, 3);
                           fs.writeFileSync(`${directory.dir}${data.id}.json`, obj);
                    } else {
                       if(data.math == true) { // math = true?
@@ -146,29 +146,25 @@ class WastefulDB {
                           if(isNaN(Number(((filt[0])[data.key])[data.child]) || isNaN(Number(data.change)))) return console.error("Unable to update file due to given key, key's child, or change returning NaN.");
                            ((filt[0])[data.key])[data.child] = Number(((filt[0])[data.key])[data.child]) + (Number(data.change));
                            ((filt[0])[data.key])[data.child] = ((filt[0])[data.key])[data.child] % 1 != 0 ? parseFloat((((filt[0])[data.key])[data.child]).toFixed(2)) : ((filt[0])[data.key])[data.child];
-                           cache = file; cache.dir = directory.dir;
-                            file = JSON.stringify(file);
+                            file = JSON.stringify(file, null, 3);
                              fs.writeFileSync(`${directory.dir}${data.id}.json`, file); 
                        } else {
                           if(isNaN(Number((filt[0])[data.key])) || isNaN(Number(data.change))) return console.error("Unable to update file due to given key or change returning NaN.");
                           (filt[0])[data.key] = Number((filt[0])[data.key]) + (Number(data.change));
                           (filt[0])[data.key] = (filt[0])[data.key] % 1 != 0 ? parseFloat(((filt[0])[data.key]).toFixed(2)) : (filt[0])[data.key];
-                          cache = file; cache.dir = directory.dir;
-                            file = JSON.stringify(file);
+                            file = JSON.stringify(file, null, 3);
                              fs.writeFileSync(`${directory.dir}${data.id}.json`, file);
                        }
                       } else { // math = false?
                           if(data.child) { // data has a key-child?
                               ((filt[0])[data.key])[data.child] = (data.change == "true" ? true : data.change == "false" ? false : data.change);
                              data.change == "undefined" ? delete ((filt[0])[data.key])[data.child] : "";  
-                             cache = file; cache.dir = directory.dir;
-                              file = JSON.stringify(file);
+                              file = JSON.stringify(file, null, 3);
                                 fs.writeFileSync(`${directory.dir}${data.id}.json`, file);
                           } else {
                               (filt[0])[data.key] = (data.change == "true" ? true : data.change == "false" ? false : data.change);
                               data.change == "undefined" ? delete (filt[0])[data.key] : "";
-                              cache = file; cache.dir = directory.dir;
-                               file = JSON.stringify(file);
+                               file = JSON.stringify(file, null, 3);
                                 fs.writeFileSync(`${directory.dir}${data.id}.json`, file);
                           }
                       }
@@ -178,8 +174,7 @@ class WastefulDB {
               file = file[0];
                if(file[data.key] == null || undefined) { // Insert new field if the provided key does not exist
                 file[data.key] = data.change;
-                cache = file; cache.dir = directory.dir;
-                 obj = [ file ]; obj = JSON.stringify(obj);
+                 obj = [ file ]; obj = JSON.stringify(obj, null, 3);
                   fs.writeFileSync(`${directory.dir}${data.id}.json`, obj);
                } else { // If key exists:
                 if(data.math == true) { // If math is set to true: 
@@ -187,29 +182,25 @@ class WastefulDB {
                   if(isNaN(Number((file[data.key])[data.child]) || isNaN(Number(data.change)))) return console.error("Unable to update file due to given key, key's child, or change returning NaN.");
                   (file[data.key])[data.child] = Number((file[data.key])[data.child]) + (Number(data.change));
                   (file[data.key])[data.child] = (file[data.key])[data.child] % 1 != 0 ? parseFloat(((file[data.key])[data.child]).toFixed(2)) : (file[data.key])[data.child];
-                  cache = file; cache.dir = directory.dir;
-                   obj = [ file ]; obj = JSON.stringify(obj);
+                   obj = [ file ]; obj = JSON.stringify(obj, null, 3);
                     fs.writeFileSync(`${directory.dir}${file}`, obj);
                  } else {
                  if(isNaN(Number(file[data.key])) || isNaN(Number(data.change))) return console.error("Unable to update file due to given key or change returning NaN.");
                   file[data.key] = Number(file[data.key]) + (Number(data.change));
                   file[data.key] = file[data.key] % 1 != 0 ? parseFloat((file[data.key]).toFixed(2)) : file[data.key];
-                  cache = file; cache.dir = directory.dir;
-                   obj = [ file ]; obj = JSON.stringify(obj);
+                   obj = [ file ]; obj = JSON.stringify(obj, null, 3);
                     fs.writeFileSync(`${directory.dir}${data.id}.json`, obj);
                  }
                } else { // If math is set to false:
                   if(data.child) {
                       (file[data.key])[data.child] = (data.change == "true" ? true : data.change == "false" ? false : data.change);
                       data.change == "undefined" ? delete (file[data.key])[data.child] : "";
-                      cache = file; cache.dir = directory.dir;
-                        obj = [file]; obj = JSON.stringify(obj);
+                        obj = [file]; obj = JSON.stringify(obj, null, 3);
                             fs.writeFileSync(`${directory.dir}${data.id}.json`, obj);
                   } else {
                  file[data.key] = (data.change == "true" ? true : data.change == "false" ? false : data.change);
                  data.change == "undefined" ? delete file[data.key] : "";
-                 cache = file; cache.dir = directory.dir;
-                  obj = [ file ]; obj = JSON.stringify(obj);
+                  obj = [ file ]; obj = JSON.stringify(obj, null, 3);
                    fs.writeFileSync(`${directory.dir}${data.id}.json`, obj);
                    }
                 }
@@ -428,24 +419,24 @@ class WastefulDB {
                   if(options.child == undefined) {
                   foo[options.key] = (options.change == "true" ? true : options.change == "false" ? false : options.change);
                   options.change == "undefined" ? delete foo[options.key] : "";
-                   bar = JSON.stringify([foo]);
+                   bar = JSON.stringify([foo], null, 3);
                     fs.writeFileSync(`${directory.dir}${id}.json`, bar);
                   } else {
                       (foo[options.key])[options.child] = (options.change == "true" ? true : options.change == "false" ? false : options.change);
                       options.change == "undefined" ? delete (foo[options.key])[options.child] : "";
-                       bar = JSON.stringify([foo]);
+                       bar = JSON.stringify([foo], null, 3);
                         fs.writeFileSync(`${directory.dir}${id}.json`, bar);
                   }
                  } else {
                   if(options.child == undefined) {
                     if(isNaN(options.change) || isNaN(foo[options.key])) return console.log("'options.change' or 'options.key' returned NaN. Try disabling 'options.math'.");
                      foo[options.key] = Number(foo[options.key]) + Number(options.change);
-                      bar = JSON.stringify([foo]);
+                      bar = JSON.stringify([foo], null, 3);
                        fs.writeFileSync(`${directory.dir}${id}.json`, bar);
                   } else {
                       if(isNaN( Number((foo[options.key])(options.child))) || isNaN( Number((foo[options.key])(options.child))) ) return console.log("'options.change' or 'options.child' returned NaN. Try disabling 'options.math'.");
                        (foo[options.key])(options.child) = Number( (foo[options.key])(options.child) ) + Number( (foo[options.key])(options.child) );
-                        bar = JSON.stringify([foo]);
+                        bar = JSON.stringify([foo], null, 3);
                          fs.writeFileSync(`${directory.dir}${id}.json`, bar);
                   }
                  }
@@ -515,7 +506,7 @@ class WastefulDB {
         data.id = data.id || id;
         let file = fs.readFileSync(`${directory.dir}${id}.json`);
         cache = JSON.parse(file); cache.dir = directory.dir;
-        data = JSON.stringify(data);
+        data = JSON.stringify(data, null, 3);
          fs.writeFileSync(`${directory.dir}${id}.json`, data);
           this.feedback == true ? console.log(`Successfully overwritten 1 document.`) : "";
        }catch(err){
@@ -536,8 +527,9 @@ class WastefulDB {
     undo() {
       if((Object.keys(cache[0])).length == 0) return console.log("There are no recent actions in the cache at this time.");
        if(fs.existsSync(`${cache.dir}${cache[0].id}.json`) == false) return console.error("The file which was originally stored in the cache no longer exists.");
-        let dir = cache.dir; delete cache.dir;
-        let data = JSON.stringify(cache[0]);
+        let dir = cache.dir; delete cache[1].dir;
+        console.log(cache);
+        let data = JSON.stringify([cache[0]], null, 3);
          fs.writeFileSync(`${dir}${cache[0].id}.json`, data);
           this.feedback == true ? console.log(`Successfully undone 1 change to document ${dir}${cache[0].id}.json`) : "";
     }
