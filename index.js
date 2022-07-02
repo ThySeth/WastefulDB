@@ -22,6 +22,8 @@ class WastefulDB {
      * @param {String} data.id A required identifier to name and track the file.
      * @param {String} [directory.dir] A specific directory to route the creation of files.
      * 
+     * @returns `Array` containing data within document.
+     * 
      * @example > db.insert({id: "5523", name: "Margot", pass: "HelloWorld~", active: false}, {dir: `${__dirname}/data/`});
      */
 
@@ -30,16 +32,18 @@ class WastefulDB {
         try {
           let obj, altid=false, dirsize = fs.readdirSync(directory.dir); dirsize = dirsize.length;
         if(this.serial == true) {
-            (data.id > 0) ? data._id = dirsize : data.id = dirsize;   data.id ? altid=true : altid;
+            (data.id > 0) ? data._id = dirsize : data.id = dirsize; data.id ? altid=true : altid;
              obj = [ data ]; obj = JSON.stringify(obj, null, 3);
               fs.writeFileSync(`${directory.dir}${data._id || data.id}.json`, obj);
                this.feedback == true ? console.log(`Successfully created 1 document. ( ${data._id || data.id}.json )`) : "";
+                return JSON.parse(obj);
         } else {
          if(!data.id) return console.log("Cannot create document without a valid 'id' key and value.");
          obj = [data]
           obj = JSON.stringify(obj, null, 3);
            fs.writeFileSync(`${directory.dir}${data.id}.json`, obj);
            this.feedback == true ? console.log("Successfully created 1 document.") : "";
+            return JSON.parse(obj);
          }
         }
         catch(err) {
@@ -55,6 +59,8 @@ class WastefulDB {
      * Create a bulk document containing an Array of Objects.
      * @param {String | Object} id The identifier within a file to search for.
      * @param {Array} data An array of Objects containing modifiable data.
+     * 
+     * @return `Array` containing data within document.
      * 
      * @example > db.insertBulk( [{first: "Sal", last: "V."}, {age: 44}, {balance: 102,543}] );
      */
@@ -78,6 +84,7 @@ class WastefulDB {
           let obj = JSON.stringify(data, null, 3);
             fs.writeFileSync(`${directory.dir}${id}.json`, obj);
              this.feedback == true ? console.log("Successfully created 1 document.") : "";
+              return JSON.parse(obj);
         }
       } catch(err) {
           if(this.kill == true) {
@@ -92,6 +99,8 @@ class WastefulDB {
      * Retrieves and parses the data within the specified file.
      * @param {Object | String} data The identifier of a file.
      * @param {String} [directory.dir] Specific directory to search for files in. 
+     * 
+     * @return `Object`
      * 
      * @example > db.find({id: "1234"}, {dir: `${__dirname}/data/`});
      */
@@ -224,6 +233,8 @@ class WastefulDB {
      * 
      * @param {String} [directory.dir] Specific directory to collect file data from.
      * 
+     * @return `Array`
+     * 
      * @example > db.collect({id: "1234"}, {dir: `${__dirname}/data/`});
      * @example > db.collect({key: "name", value: "mick"});
      */
@@ -276,6 +287,9 @@ class WastefulDB {
      * Search the given directory for a specified identifier regardless of file name.
      * @param {String} data Identifier to scan for in each file.
      * @param {String} [data.dir] Specific directory to search for a file.
+     * 
+     * @return `Object`
+     * 
      * @example > db.get({id: "1234", dir: `${__dirname}/data/`}, (result) => { console.log(result); });
      */
 
@@ -342,6 +356,8 @@ class WastefulDB {
      * @param {Object | String} data Provide the identifier of a file to view if it currently exists.
      * @param {String} [directory.dir] Specific directory to check for an existing file.
      * 
+     * @return `Boolean`
+     * 
      * @example > db.check("1234", {dir: `${__dirname}/data/`});
      */
 
@@ -356,6 +372,8 @@ class WastefulDB {
     /**
      * Returns the total amount of files in the default or given directory where documents are read/written.
      * @param {String} [directory.dir] Specific directory to retrieve the file count from.
+     * 
+     * @return `Number`
      * 
      * @example > db.size({dir: `${__dirname}/data/`});
      */
@@ -393,66 +411,6 @@ class WastefulDB {
           }
         }
     }
-
-    /**
-    * Update several files at the same time with the same information provided.
-    * @param {Array} identifier An array of identifiers to modify.
-    * 
-    * @param {String} options.key The name of an Object's key to modify.
-    * @param {String} options.child A following key within the specified Object.
-    * @param {String} options.change The change to make to an Object.
-    * @param {Boolean} options.math Does the change require SIMPLE math?
-    * 
-    * @example > db.updateMass(["2", "3", "4"], {key: "age", change: -1, math: true});
-    */
-
-    updateMass(identifier = [], options = {key, child, change, math}, directory = {dir: this.path}) {
-      if(!(identifier instanceof Array)) return console.log("You must provide an identifier or identifiers within an Array.");
-       if(options.key == undefined || (options.key).length == 0) return console.log("An Object's key is required at 'options.key'."); if(options.change == undefined || (options.change).length == 0) return console.log("Unable to update due to missing input at 'options.change.");
-        try {
-            let foo, bar, c=0;
-              identifier.forEach(id => {
-               c++;
-                foo = fs.readFileSync(`${directory.dir}${(id).toString()}.json`);
-                 foo = JSON.parse(foo); foo = foo[0]
-                 if(options.math == false) {
-                  if(options.child == undefined) {
-                  foo[options.key] = (options.change == "true" ? true : options.change == "false" ? false : options.change);
-                  options.change == "undefined" ? delete foo[options.key] : "";
-                   bar = JSON.stringify([foo], null, 3);
-                    fs.writeFileSync(`${directory.dir}${id}.json`, bar);
-                  } else {
-                      (foo[options.key])[options.child] = (options.change == "true" ? true : options.change == "false" ? false : options.change);
-                      options.change == "undefined" ? delete (foo[options.key])[options.child] : "";
-                       bar = JSON.stringify([foo], null, 3);
-                        fs.writeFileSync(`${directory.dir}${id}.json`, bar);
-                  }
-                 } else {
-                  if(options.child == undefined) {
-                    if(isNaN(options.change) || isNaN(foo[options.key])) return console.log("'options.change' or 'options.key' returned NaN. Try disabling 'options.math'.");
-                     foo[options.key] = Number(foo[options.key]) + Number(options.change);
-                      bar = JSON.stringify([foo], null, 3);
-                       fs.writeFileSync(`${directory.dir}${id}.json`, bar);
-                  } else {
-                      if(isNaN( Number((foo[options.key])(options.child))) || isNaN( Number((foo[options.key])(options.child))) ) return console.log("'options.change' or 'options.child' returned NaN. Try disabling 'options.math'.");
-                       (foo[options.key])(options.child) = Number( (foo[options.key])(options.child) ) + Number( (foo[options.key])(options.child) );
-                        bar = JSON.stringify([foo], null, 3);
-                         fs.writeFileSync(`${directory.dir}${id}.json`, bar);
-                  }
-                 }
-              })
-              if(c == identifier.length) {
-                this.feedback == true ? console.log(`Successfully updated ${c} documents.`) : "";
-            }
-        } catch(err) {
-          if(this.kill == true) {
-              throw new Error(err.message);
-          } else {
-            console.log("Error: " + err.message);
-          }
-        }
-    }
-
 
 
     /**
