@@ -18,18 +18,18 @@ const db = new Wasteful({feedback: false, path: `${__dirname}/data/`, serial: fa
 - [To-Do List (GitHub)](https://github.com/ThySeth/WastefulDB/blob/main/TODO.md)
 - [In Depth](#in-depth)
   - [Specify Directories](#specify-directories)
-  - [Insert Documents](#insert)
-  - [Insert Bulk Documents](#insertbulk)
-  - [Find Documents](#find)
-  - ["Get" Documents](#get)
-  - [Update a Document](#update)
-  - [Update a Nested Object](#update-with-child-value)
-  - [Update by Mass](#updatemassid-options)
+  - [Insert Documents](#insert "db.insert()")
+  - [Insert Bulk Documents](#insertbulk "db.insertBulk()")
+  - [Find Documents](#find "db.find()")
+  - ["Get" Documents](#get "db.get()")
+  - [Update a Document](#update "db.update()")
+    - [Update a Nested Object](#update-with-child-value)
+  - [Update Multiple Objects](#mupdateid-array-of-objects "db.mupdate()")
   - [Update via Key Content (Deprecated/Removed)](https://github.com/ThySeth/WastefulDB/commit/be7b497ecaa72b66e98a6155ff97e0bafea87625)
-  - [Collect Documents](#collectid-key-value)
-  - [Replicate Documents](#replicateid-to-from-force)
-  - [Overwrite Documents](#setid-data-dir)
-  - [Undo Updates](#undo)
+  - [Collect Documents](#collectid-key-value "db.collect()")
+  - [Replicate Documents](#replicateid-to-from-force "db.replicate()")
+  - [Overwrite Documents](#setid-data-dir "db.set()")
+  - [Undo Updates](#undo "db.undo")
 
 ___
 
@@ -45,7 +45,7 @@ new Wasteful({feedback: true, path: `${__dirname}/info/`, serial: false, kill: f
 ___
 
 ## Specify Directories
-#### Each function is capable of interacting with specific directories outside the "path" constructor option when specified within the {dir} option.
+#### Every function is capable of interacting with specific directories outside the "path" constructor option when specified within the {dir} option.
 ```js
 db.find({id: "1234"}, {dir: `${__dirname}/patrons/`});
 
@@ -112,15 +112,13 @@ db.update({id: "5", key: "name", child: "last", change: "A."});
 
 ___
 
-## .updateMass(id, options)
-#### Provide an array of identifiers to search and update all files with the given information. updateMass() supports the "child" option.
+## .mupdate(id, [Array of Objects])
+#### Update multiple objects within a single document. A good alternative to `.update()` for several changes in a single document.
 ```js
-db.updateMass(["2", "3", "4"], {key: "age", change: -1, math: true});
+db.update("5", [ {key: "balance", change: -34, math: true}, {key: "name", child: "middle", change: "A."} ])
 ```
-* [identifiers] - An array of identifiers to find and update the given information.
-* key - (aka element) The name of a key within an Object to modify.
-* change - The change to make to the key.
-
+* id - The identifier of the file to update
+* "Array of Objects" - An array containing several, properly formatted objects to update the specified document.
 ___
 
 ## .collect({id?, key?, value?})
