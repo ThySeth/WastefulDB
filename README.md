@@ -115,7 +115,7 @@ ___
 ## .mupdate(id, [Array of Objects])
 #### Update multiple objects within a single document. A good alternative to `.update()` for several changes in a single document.
 ```js
-db.update("5", [ {key: "balance", change: -34, math: true}, {key: "name", child: "middle", change: "A."} ])
+db.mupdate("5", [ {key: "balance", change: -34, math: true}, {key: "name", child: "middle", change: "A."} ])
 ```
 * id - The identifier of the file to update
 * "Array of Objects" - An array containing several, properly formatted objects to update the specified document.
