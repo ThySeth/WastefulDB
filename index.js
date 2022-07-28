@@ -226,19 +226,20 @@ class WastefulDB {
   }
 
   /**
-   * @param {String} id The identifier of the target document.
+   * @param {Object} id The identifier of the target document.
    * @param {Array} data The array which stores objects to be sent to the target document.
    * 
    * @param {String} directory.dir The target directory of the document.
    * 
-   * @ex > db.mupdate("1234", [ {key: "name", change: "Nick", math: false}, {key: "pass", change: "Password1234"} ]);
+   * @example > db.mupdate("1234", [ {key: "name", change: "Nick", math: false}, {key: "pass", change: "Password1234"} ]);
    */
 
   mupdate(id, data = [], directory={dir: this.path}) {
     let obj, foo, bar;
      try {
        // CATCH MISSING ARGUMENTS
-        if(!id) return console.error("Unable to locate document due to missing identifier argument."); if(!(data instanceof Array) || data.length <= 1) return console.error("The data provided must be contained within an Array and have more than 1 Object.");
+        if(!(id instanceof String) && (id instanceof Object && !id.id)) return console.error("Unable to locate document due to missing identifier argument."); if(!(data instanceof Array) || data.length <= 1) return console.error("The data provided must be contained within an Array and have more than 1 Object.");
+        id = id.id ? id.id : id; // Handle alternative object form for identifiers
         if(fs.existsSync(`${directory.dir}${id}.json`) == false) return console.log("Couldn't find any documents with the given identifier.");
         // OPEN DOCUMENT
           obj = fs.readFileSync(`${directory.dir}${id}.json`); obj = JSON.parse(obj);
