@@ -336,61 +336,37 @@ class WastefulDB {
   }
 
     /**
-     * Reads each file within the directory and returns an array of objects with the information in each JSON file. Providing an id and/or key will filter through and push each file matching the profile.
-     * @param {String} [data.id] The identifier stored within the file.
-     * @param {String} [data.key] A key within a file's Object to search for.
-     * @param {String} [data.value] The value of a key to search for. A "key" is required to use this.
+     * Collects every document within the given directory. 
+     * The data within each document is parsed, compiled, and returned within an Array. 
+     * Returns `-1` if the Array is empty.
      * 
-     * @param {String} [directory.dir] Specific directory to collect file data from.
+     * @param {String} [directory.dir] The directory to collect all the documents from.
      * 
-     * @return `Array`
+     * @returns `Array` 
      * 
-     * @example > db.collect({id: "1234"}, {dir: `${__dirname}/data/`});
-     * @example > db.collect({key: "name", value: "mick"});
+     * @example > db.collect();
+     * @example > db.collect({dir: `${__dirname}/data/`});
      */
 
-    collect(data, directory = {dir: this.path}) {
-     let obj = []
-        try {
-        if(data == null || !data) {
-           let files = fs.readdirSync(`${directory.dir}`);
-            files.forEach(file => {
-                let info = fs.readFileSync(`${directory.dir}${file}`); if(!obj) return new Error("File abnormality ocurred whilst attempting to read a file.\nFile name: " + file)
-                 info = JSON.parse(info); 
-                 info = info.length > 1 ? info : info[0]
-                  obj.push(info);
-            });
-             return obj;
-         } else {
-            let files = fs.readdirSync(`${directory.dir}`);
-            files.forEach(file => {
-                let target = fs.readFileSync(`${directory.dir}${file}`);
-                if(!target) return console.error("Couldn't find any files pertaining to the given key and value.")
-                 target = JSON.parse(target); target = target[0];
-                 data.id = (data.id).toString();
-                  if(data.id && data.key == undefined) { // "id" without "element"
-                      if(data.id == target.id) return obj.push(target);
-                  } else if(data.key && data.value == undefined && data.id == undefined) { // "element" without "id"
-                       if(target[data.key]) return obj.push(target);
-                  } else if(data.key && data.value && data.id == undefined) { // "element" and "value" without "id"
-                        if(target[data.key] && target[data.key] == data.value) return obj.push(target);
-                  } else if(data.key && data.id && data.value == undefined) { // "element" and "id" without "value"
-                        if(target.id == data.id && target[data.key]) return obj.push(target);
-                  } else if(data.key && data.id && data.value) { // "element", "id", and "value"
-                        if(target.id == data.id && target[data.key] && target[data.key] == data.value) return obj.push(target);
-                  } else {
-                      return;
-                  }
-            });
-             return obj.length == 0 ? undefined : obj;
-         }
-        } catch(err) {
-         if(this.kill == true) {
-            throw new Error(err.message);
-         } else {
-            console.log("Error: " + err.message);
-         }
-        }
+    collect(directory = {dir: this.path}) {
+     try {
+      let obj = []
+      let files = fs.readdirSync(`${directory.dir}`);
+      files.forEach(file => {
+       file = fs.readFileSync(`${directory.dir}${file}`);
+        file = JSON.parse(file); 
+        file.length > 1 ? obj.push(file) : obj.push(file[0]);
+      });
+       this.feedback == true ? console.log("Successfully collected all documents in the directory.") : "";
+        obj = obj.length == 0 ? -1 : obj;
+         return obj;
+     } catch(err) {
+       if(this.kill == true) {
+        throw new Error(err);
+       } else {
+        console.log(`Error: ${err.message}`);
+       }
+     }
     }
 
     /**
@@ -538,6 +514,7 @@ class WastefulDB {
       options.force = options.force || false;
      try {
       if(!id) return console.log("An identifier of a file to replicate must be provided.");
+      id = id.id || id;
       if(fs.existsSync(`${options.to}/${id}.json`) > 0 && options.force == false) return console.log(`The provided document already exists in the directory "${options.to}". Move or delete the document in order to replicate again.`);
       if(fs.existsSync(`${options.to}/${id}.json`) > 0 && options.force == true) {
       if(fs.existsSync(`${options.to}/${id}_rep.json`) == true) return console.log(`Document "${options.from}/${id}.json" has already been replicated at the target destination.`);
@@ -569,6 +546,7 @@ class WastefulDB {
     set(id, data, directory = {dir: this.path}) {
       id = id.toString();
       if(!id || !(data instanceof Object)) return console.error("Unable to set a document due to a missing identifier or your data is not an Object.");
+      id = id.id || id;
        try {
         if(fs.existsSync(`${directory.dir}${id}.json`) == false) return console.error(`The given document identifier does not exist in this directory.`);
         data.id = data.id || id;
@@ -596,7 +574,6 @@ class WastefulDB {
       if((Object.keys(cache[0])).length == 0) return console.log("There are no recent actions in the cache at this time.");
        if(fs.existsSync(`${cache.dir}${cache[0].id}.json`) == false) return console.error("The file which was originally stored in the cache no longer exists.");
         let dir = cache.dir; delete cache[1].dir;
-        console.log(cache);
         let data = JSON.stringify([cache[0]], null, 3);
          fs.writeFileSync(`${dir}${cache[0].id}.json`, data);
           this.feedback == true ? console.log(`Successfully undone 1 change to document ${dir}${cache[0].id}.json`) : "";
