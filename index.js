@@ -22,13 +22,15 @@ class WastefulDB {
      * @param {Boolean} options.log Writes to the file "logger.txt" when a function is executed or an error occurs. Includes a timestamp, name of function, and what occurred. (default: `false`)
      * @param {String} options.path Provide a custom directory to route each JSON file. Ignoring this will default read/write to "`./wastefuldb/data/`"
      * @param {Boolean} options.serial When **true**, you are no longer required to include an id variable to your file data. Instead, the identifier is based on the **directory size** at the time. (default: `false`)
+     * @param {Array} options.standard standard[0], when **true**, will default to the given Object in stanard[1] and automatically create a document which doesn't exist when using functions such as `.find()`. Only works when `serial` is **true**. (default: `false`)
      * @param {Boolean} options.kill When an error occurs and the option is set to **true**, automatically kills the process to prevent further errors. (default: `false`)
      */
-    constructor(options = {feedback, log, path, serial, kill}) {
+    constructor(options = {feedback, log, path, serial, standard: [false, {}], kill}) {
         this.feedback = options.feedback || false
         this.log = options.log || false
         this.path = options.path || `${__dirname}/data/`;
         this.serial = options.serial || false
+        this.standard = (options.standard && options.serial == true) ? options.standard : [false] + (console.log("Notice -- 'standard' cannot be set while option 'serial' is set to false."));
         this.kill = options.kill || false
         this.path = (this.path).charAt((this.path).length-1) == "/" ? this.path : this.path + "/";
     }
@@ -44,36 +46,36 @@ class WastefulDB {
      */
 
      insert(data={id}, directory = {dir: this.path}) {
-        if(!(data instanceof Object)) return console.log("Information given must be an Object."); 
-        try {
-          let obj, altid=false, dirsize = fs.readdirSync(directory.dir); dirsize = dirsize.length;
-        if(this.serial == true) {
-            (data.id > 0) ? data._id = dirsize : data.id = dirsize; data.id ? altid=true : altid;
-             obj = [ data ]; obj = JSON.stringify(obj, null, 3);
-              fs.writeFileSync(`${directory.dir}${data._id || data.id}.json`, obj);
-               this.feedback == true ? console.log(`Successfully created 1 document. ( ${data._id || data.id}.json )`) : "";
-               this.log == true ? Logger(`[ ${new Date()} - insert() ] File "${data.id}" was successfully created.`) : ""
-                return JSON.parse(obj);
+      if(!(data instanceof Object)) return console.log("Information given must be an Object."); 
+      try {
+        let obj, altid=false, dirsize = fs.readdirSync(directory.dir); dirsize = dirsize.length;
+      if(this.serial == true) {
+          (data.id > 0) ? data._id = dirsize : data.id = dirsize; data.id ? altid=true : altid;
+           obj = [ data ]; obj = JSON.stringify(obj, null, 3);
+            fs.writeFileSync(`${directory.dir}${data._id || data.id}.json`, obj);
+             this.feedback == true ? console.log(`Successfully created 1 document. ( ${data._id || data.id}.json )`) : "";
+             this.log == true ? Logger(`[ ${new Date()} - insert() ] File "${data.id}" was successfully created.`) : ""
+              return JSON.parse(obj);
+      } else {
+       if(!data.id) return console.log("Cannot create document without a valid 'id' key and value.");
+       obj = [data]
+        obj = JSON.stringify(obj, null, 3);
+         fs.writeFileSync(`${directory.dir}${data.id}.json`, obj);
+         this.feedback == true ? console.log("Successfully created 1 document.") : "";
+         this.log == true ? Logger(`[ ${new Date()} - insert() ] File "${data.id}" was successfully created.`) : ""
+          return JSON.parse(obj);
+       }
+      }
+      catch(err) {
+        if(this.kill == true) {
+            throw new Error(err.message);
         } else {
-         if(!data.id) return console.log("Cannot create document without a valid 'id' key and value.");
-         obj = [data]
-          obj = JSON.stringify(obj, null, 3);
-           fs.writeFileSync(`${directory.dir}${data.id}.json`, obj);
-           this.feedback == true ? console.log("Successfully created 1 document.") : "";
-           this.log == true ? Logger(`[ ${new Date()} - insert() ] File "${data.id}" was successfully created.`) : ""
-            return JSON.parse(obj);
-         }
+          console.log("Error: " + err.message);
         }
-        catch(err) {
-          if(this.kill == true) {
-              throw new Error(err.message);
-          } else {
-            console.log("Error: " + err.message);
-          }
-          this.log == true ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "insert()"!`) : ""
-        }
-    }
-
+        this.log == true ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "insert()"!`) : ""
+      }
+  }
+    
     /**
      * Create a bulk document containing an Array of Objects.
      * @param {String | Object} id The identifier within a file to search for.
@@ -128,12 +130,20 @@ class WastefulDB {
 
     find(data, directory = { dir: this.path }) {
       try {
+        if((fs.existsSync(`${directory.dir}${(data.id || data).toString()}.json`) == false) && this.standard[0] == true) {
+          let newFile = this.standard[1]; newFile.id = (data.id || data); newFile = JSON.stringify([newFile])
+          fs.writeFileSync(`${directory.dir}${(data.id || data).toString()}.json`, newFile)
+          this.feedback == true ? console.log("Successfully found 1 document.") : "";
+          this.log == true ? Logger(`[ ${new Date()} - find() ] File "${data.id || data}" was unsuccessfully found. Document defaulted.`) : ""
+          return JSON.parse(newFile)
+        } else {
         let info = fs.readFileSync(`${directory.dir}${(data.id || data).toString()}.json`);
           info = JSON.parse(info);
           this.feedback == true ? console.log("Successfully found 1 document.") : "";
           this.log == true ? Logger(`[ ${new Date()} - find() ] File "${data.id || data}" was successfully found.`) : ""
           info = info.length > 1 ? info : info[0];
            return info;
+        }
       } catch(err) {
         if(this.kill == true) {
           throw new Error(err.message);
@@ -410,7 +420,7 @@ class WastefulDB {
      * @example > db.get({id: "1234", dir: `${__dirname}/data/`}, (result) => { console.log(result); });
      */
 
-    get(data = {id, dir}, callback) {
+     get(data = {id, dir}, callback) {
       data.dir == undefined ? data.dir = this.path : data.dir;
         try {
         let end = false;
@@ -633,6 +643,5 @@ class WastefulDB {
     }
     
 }
-
 
 module.exports = WastefulDB;
