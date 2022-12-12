@@ -35,11 +35,13 @@ ___
 
 ### In Depth
 ```js
-new Wasteful({feedback: true, path: `${__dirname}/info/`, serial: false, kill: false});
+new Wasteful({feedback: false, log: false, path: `${__dirname}/info/`, standard: [false, {}], serial: false, kill: false});
 ```
 * feedback - Sends a confirmation via console when a function is executed successfully. (__default__: `false`)
+* log - Catalogs every time a function is executed or an error occurs, including the timestamp at which the event occurred. (__default__: `false`)
 * path - Provide a custom path where you wish JSON files to be written/read. (__default__: `./wastefuldb/data/`)
-* serial - Automatically assigns filenames/identifiers based on the size of the set path. (__default__: `false`)
+* standard - When __standard[0]__ is true, when a document doesn't exist when using `.find()`, a new document will be created with a default value given in __standard[1]__. _WILL NOT_ work when serial is false. (__default__: `false`)
+* serial - Automatically assigns filenames/identifiers based on the size of the set path/directory. (__default__: `false`)
 * kill - When set to true, the process will be kill when an error occurs in a try/catch statement. (__defualt__: `false`)
 
 ___
