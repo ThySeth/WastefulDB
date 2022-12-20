@@ -2,10 +2,10 @@
 A little custom made, document-oriented database project made with JavaScript and JSON for convenience.
 
 
-### Setup
+### Quick Setup
 ```js
 const Wasteful = require('wastefuldb');
-const db = new Wasteful({feedback: false, path: `${__dirname}/data/`, serial: false, kill: false});
+const db = new Wasteful();
 ```
 
 ### Overall Requirements:
@@ -35,7 +35,7 @@ ___
 
 ### In Depth
 ```js
-new Wasteful({feedback: false, log: false, path: `${__dirname}/info/`, standard: [false, {}], serial: false, kill: false});
+new Wasteful({feedback: false, log: false, path: `${__dirname}/info/`, standard: [false], serial: false, kill: false});
 ```
 * feedback - Sends a confirmation via console when a function is executed successfully. (__default__: `false`)
 * log - Catalogs every time a function is executed or an error occurs, including the timestamp at which the event occurred. (__default__: `false`)
