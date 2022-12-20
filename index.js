@@ -25,12 +25,12 @@ class WastefulDB {
      * @param {Array} options.standard standard[0], when **true**, will default to the given Object in stanard[1] and automatically create a document which doesn't exist when using functions such as `.find()`. Only works when `serial` is **true**. (default: `false`)
      * @param {Boolean} options.kill When an error occurs and the option is set to **true**, automatically kills the process to prevent further errors. (default: `false`)
      */
-    constructor(options = {feedback, log, path, serial, standard: [false, {}], kill}) {
+    constructor(options = {feedback, log, path, serial, standard, kill}) {
         this.feedback = options.feedback || false
         this.log = options.log || false
         this.path = options.path || `${__dirname}/data/`;
         this.serial = options.serial || false
-        this.standard = (options.standard && options.serial == true) ? options.standard : [false] + (console.log("Notice -- 'standard' cannot be set while option 'serial' is set to false."));
+        this.standard = options.standard || [false]; (this.standard == true && this.serial == false) ? console.log("Option 'standard' cannot be true while 'serial' is false.") : ""
         this.kill = options.kill || false
         this.path = (this.path).charAt((this.path).length-1) == "/" ? this.path : this.path + "/";
     }
