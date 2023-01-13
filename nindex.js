@@ -1,4 +1,5 @@
 const fs = require("fs");
+let cache = [];
 
 function Logger(data) {
   try {
@@ -35,7 +36,6 @@ class WastefulDB {
         this.path = (this.path).charAt((this.path).length-1) == "/" ? this.path : this.path + "/";
     }
 
-    
 
     insert(data = {id}, directory = {dir: this.path}) {
       try {
@@ -358,7 +358,171 @@ class WastefulDB {
       }
     }
 
+
+    get(data = {id, dir: this.path}, callback) {
+      try {
+        if(!(data instanceof Object)) return console.log("Unable to 'get' any documents. The 'data' argument must be an Object.");
+        if(!data.id) return console.log("Unable to 'get' any documents. There must be an 'id' key declared in the data paremeter.");
+          let info, obj, find, _find, dataAtt, end = false, files = fs.readdirSync(data.dir);
+            files.forEach(file => {
+              if(end == true) return;
+                info = fs.readFileSync(`${data.dir}${file}`);
+                  obj = JSON.parse(info);
+                    if(obj.length > 1) { // File was created using .insertBulk()
+                      find = obj.filter(i => i["id"]);
+                      _find = obj.filter(i => i["_id"])
+                        if(find) { // Filter Success
+                          if((find[0].id == (data.id).toString()) || (_find[0]._id == (data.id).toString())) { // Accept _id for serialization + own id compatability
+                            this.feedback == true ? console.log("Successfully retrieved 1 document.") : "";
+                            this.log == true ? Logger(`[ ${new Date()} - get() ] File "${data.id}" was successfully retrieved.`) : ""
+                              end = true;
+                              return callback(obj);
+                          }
+                        }
+                    } else { // File was created using .insert()
+                      obj = obj[0];
+                        if((obj.id == (data.id).toString()) || obj._id == (data.id).toString()) {
+                          this.feedback == true ? console.log("Successfully retrieved 1 document.") : "";
+                          this.log == true ? Logger(`[ ${new Date()} - get() ] File "${data.id}" was successfully retrieved.`) : ""
+                            end = true;
+                            return callback(obj);
+                        }
+                    }
+            })
+      } catch(err) {
+        this.log == true ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "get()"!`) : ""
+        if(this.kill) {
+          throw new Error(err);
+        } else {
+          return console.log(err);
+        }
+      }
+    }
+
+
+    check(data, directory = {dir: this.path}) {
+      try {
+        return fs.existsSync(`${directory.dir}${(data.id || data).toStringq()}.json`);
+      } catch(err) {
+        this.log == true ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "check()"!`) : ""
+        if(this.kill) {
+          throw new Error(err);
+        } else {
+          return console.log(err);
+        }
+      }
+    }
+
+
+
+    size(directory = {dir: this.path}) {
+      try {
+        let files = fs.readdirSync(directory.dir);
+          return files.length;
+      } catch(err) {
+        this.log == true ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "size()"!`) : ""
+        if(this.kill) {
+          throw new Error(err);
+        } else {
+          return console.log(err);
+        }
+      }
+    }
+
+
+
+    delete(data, directory = {dir: this.path}) {
+      try {
+        if(fs.existsSync(`${directory.dir}${(data.id || data).toString()}.json`) == false) return console.log(`The document "${data.id || data}.json" cannot be deleted because it does not exist.`);
+          fs.rmSync(`${directory.dir}${(data.id || data).toString()}.json`);
+            this.feedback == true ? console.log("Successfully deleted 1 document.") : "";
+            this.log == true ? Logger(`[ ${new Date()} - delete() ] File "${data.id}" was successfully deleted.`) : ""
+      }catch(err) {
+        this.log == true ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "delete()"!`) : ""
+        if(this.kill) {
+          throw new Error(err);
+        } else {
+          return console.log(err);
+        }
+      }
+    }
+
+
+
+    replicate(id, options = {to: this.path, from: this.path, force: false}) {
+      options.to = options.to || this.path;
+      options.from = options.from || this.path;
+      options.force = options.force || false;
+     try {
+      if(!id) return console.log("An identifier of a file to replicate must be provided.");
+      id = id.id || id;
+      if(fs.existsSync(`${options.to}/${id}.json`) > 0 && options.force == false) return console.log(`The provided document already exists in the directory "${options.to}". Move or delete the document in order to replicate again.`);
+      if(fs.existsSync(`${options.to}/${id}.json`) > 0 && options.force == true) {
+      if(fs.existsSync(`${options.to}/${id}_rep.json`) == true) return console.log(`Document "${options.from}/${id}.json" has already been replicated at the target destination.`);
+       let _data = fs.readFileSync(`${options.from}/${id}.json`);
+        fs.writeFileSync(`${options.to}/${id}_rep.json`, _data);
+         this.feedback == true ? console.log(`Successfully forced replication of 1 document. ( ${options.from}/${id}.json > ${options.to}/${id}_rep.json )`) : "";
+         this.log == true ? Logger(`[ ${new Date()} - replicate() ] File "${id}" was force replicated.`) : ""
+      } else {
+       let data = fs.readFileSync(`${options.from}/${id}.json`);
+        fs.writeFileSync(`${options.to}/${id}.json`, data);
+         this.feedback == true ? console.log(`Successfully replicated 1 document.`) : "";
+         this.log == true ? Logger(`[ ${new Date()} - replicate() ] File "${id}" was successfully replicated.`) : ""
+      }
+     } catch(err) {
+       if(this.kill == true) {
+         throw new Error(err.message);
+       } else {
+         console.log("Error: " + err.message);
+       }
+       this.log == true ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "replicate()"!`) : ""
+     }
+    }
+
+
+
+    set(id, data, directory = {dir: this.path}) {
+      id = id.toString();
+      if(!id || !(data instanceof Object)) return console.error("Unable to set a document due to a missing identifier or your data is not an Object.");
+      id = id.id || id;
+       try {
+        if(fs.existsSync(`${directory.dir}${id}.json`) == false) return console.error(`The given document identifier does not exist in this directory.`);
+        data.id = data.id || id;
+        let file = fs.readFileSync(`${directory.dir}${id}.json`);
+        cache = JSON.parse(file); cache.dir = directory.dir;
+        data = JSON.stringify(data, null, 3);
+         fs.writeFileSync(`${directory.dir}${id}.json`, data);
+          this.feedback == true ? console.log(`Successfully overwritten 1 document.`) : "";
+          this.log == true ? Logger(`[ ${new Date()} - set() ] File "${id}" was successfully overwritten.`) : ""
+       }catch(err){
+         if(this.kill == true) {
+           throw new Error(err.message);
+         } else {
+           console.log("Error: " + err.message);
+         }
+         this.log == true ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "set()"!`) : ""
+       }
+    }
     
+
+
+    undo() {
+      try {
+      if((Object.keys(cache[0])).length == 0) return console.log("There are no recent actions in the cache at this time.");
+       if(fs.existsSync(`${cache.dir}${cache[0].id}.json`) == false) return console.error("The file which was originally stored in the cache no longer exists.");
+        let dir = cache.dir; delete cache[1].dir;
+        let data = JSON.stringify([cache[0]], null, 3);
+         fs.writeFileSync(`${dir}${cache[0].id}.json`, data);
+          this.feedback == true ? console.log(`Successfully undone 1 change to document ${dir}${cache[0].id}.json`) : "";
+      }catch(err) {
+        if(this.kill == true) {
+          throw new Error(err.message);
+        } else {
+          console.log("Error: " + err.message);
+        }
+        this.log == true ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "undo()"!`) : ""
+      }
+    }
 
 }
 
