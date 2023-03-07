@@ -22,6 +22,7 @@ const db = new Wasteful();
   - [Insert Bulk Documents](#insertbulk "db.insertBulk()")
   - [Find Documents](#find "db.find()")
   - ["Get" Documents](#get "db.get()")
+  - [Append Data](#append)
   - [Update a Document](#update "db.update()")
     - [Update a Nested Object](#update-with-child-value)
   - [Update Multiple Objects](#mupdateid-array-of-objects "db.mupdate()")
@@ -91,6 +92,20 @@ db.get({id: "4321", dir: `${__dirname}/data/`}, async(res) => { console.log(awai
 ```
 * id - The internal identifier of a file.
 * dir - A specific directory to search in. (optional)
+
+___
+
+## .append()
+#### Append a new key and value or append a new child-key and value to an existing key within a document.
+```js
+db.append({id: "7", key: "bill", child: "career", value: "Mechanical Engineer", position: 1});
+db.append({id: "5678", key: "real", value: "true"}, {dir: `${__dirname}/data/`});
+```
+* id - The identifier of the file to update
+* key - The name of the key that will be appended OR the preexisting key to append a child-key to.
+* child - The name of the child-key to append to the aforementioned key.
+* value - The content of the given key or child-key.
+* position - Which object within an array to append to. This is only needed if the document was created using `.insertBulk()`. Defaults to the first object in the array.
 
 ___
 
