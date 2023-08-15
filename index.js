@@ -18,6 +18,7 @@ function Logger(data) {
 
 class WastefulDB {
     /**
+     * @constructor
      * @param {Boolean} options.feedback Provides a confirmation message when a function executes successfully. (default: `false`)
      * @param {Boolean} options.log Writes to the file "logger.txt" when a function is executed or an error occurs. Includes a timestamp, name of function, and what occurred. (default: `false`)
      * @param {String} options.path Provide a custom directory to route each JSON file. Ignoring this will default read/write to "`./wastefuldb/data/`"
@@ -40,9 +41,9 @@ class WastefulDB {
      * @param {String} data.id A required identifier to name and track the file.
      * @param {String} [directory.dir] A specific directory to route the creation of files.
      * 
-     * @returns `Array` containing data within document.
-     * 
      * @example > db.insert({id: "5523", name: "Margot", pass: "HelloWorld~", active: false}, {dir: `${__dirname}/data/`});
+     * 
+     * @returns {Array} array containing data within document.
      */
 
      insert(data={id}, directory = {dir: this.path}) {
@@ -81,9 +82,9 @@ class WastefulDB {
      * @param {String | Object} id The identifier within a file to search for.
      * @param {Array} data An array of Objects containing modifiable data.
      * 
-     * @return `Array` containing data within document.
-     * 
      * @example > db.insertBulk( [{first: "Sal", last: "V."}, {age: 44}, {balance: 102,543}] );
+     * 
+     * @returns {Array} array containing data within document.
      */
      insertBulk(data = [], directory = {dir: this.path}) {    
         let cancel = false;
@@ -123,9 +124,9 @@ class WastefulDB {
      * @param {Object | String} data The identifier of a file.
      * @param {String} [directory.dir] Specific directory to search for files in. 
      * 
-     * @return `Object`
-     * 
      * @example > db.find({id: "1234"}, {dir: `${__dirname}/data/`});
+     * 
+     * @returns {Object} document object of the specified file.
      */
 
     find(data, directory = { dir: this.path }) {
@@ -165,6 +166,8 @@ class WastefulDB {
      * @param {String} [directory.dir] Specific directory to search for and update files. 
      *
      * @example > db.update({id: "1234", key: "name", child: "first", change: "Seth", math: false}, {dir: `${__dirname}/data/`});
+     * 
+     * @returns {Object} document object after updating the data.
      */
     
      update(data = {id, key, child, change, math:false}, directory = {dir: this.path}) { 
@@ -213,6 +216,7 @@ class WastefulDB {
                    }
                    this.feedback == true ? console.log("Successfully updated 1 bulk document.") : null;
                    this.log == true ? Logger(`[ ${new Date()} - update() ] File "${data.id}" was successfully updated.`) : ""
+                   return JSON.parse(file)
               } else { // If document was created with insert()
               file = file[0];
                if(file[data.key] == null || undefined) { // Insert new field if the provided key does not exist
@@ -250,6 +254,7 @@ class WastefulDB {
               }
             this.feedback == true ? console.log("Successfully updated 1 document.") : "";
             this.log == true ? Logger(`[ ${new Date()} - update() ] File "${data.id}" was successfully updated.`) : ""
+            return JSON.parse(obj);
             }
        }catch(err){
           if(this.kill == true) {
@@ -268,6 +273,8 @@ class WastefulDB {
    * @param {String} directory.dir The target directory of the document.
    * 
    * @example > db.mupdate("1234", [ {key: "name", change: "Nick", math: false}, {key: "pass", change: "Password1234"} ]);
+   * 
+   * @returns {Object} document object after the data is updated.
    */
 
   mupdate(id, data = [], directory={dir: this.path}) {
@@ -322,6 +329,7 @@ class WastefulDB {
                 fs.writeFileSync(`${directory.dir}${id}.json`, bar);
                  this.feedback == true ? console.log("Successfully mupdated 1 bulk document.") : "";
                  this.log == true ? Logger(`[ ${new Date()} - mupdate() ] File "${data.id}" was successfully updated.`) : ""
+                 return JSON.parse(bar);
             } else {
                 // BASIC SINGLE OBJECT DOCUMENT <---
                  obj = obj[0];
@@ -363,6 +371,7 @@ class WastefulDB {
                   fs.writeFileSync(`${directory.dir}${id}.json`, bar);
                    this.feedback == true ? console.log("Successfully mupdated 1 document.") : "";
                    this.log == true ? Logger(`[ ${new Date()} - mupdate() ] File "${data.id}" was successfully updated.`) : ""
+                   return JSON.parse(bar);
             }
      } catch(err) {
         if(this.kill == true) {
@@ -378,62 +387,57 @@ class WastefulDB {
    * 
    * @param {String} data.id The identifier of the document to modify.
    * @param {String} data.key The key within the document to append the following 'value' to.
-   * @param {String} data.child Append a 'child' key with the following 'value'. The provided 'key' **must exist** in order to append a child key.
    * @param {Object} data.value The 'value' or object to append to the given document.
-   * @param {Number} data.position Which object should the given value be appended to? Defaults to the first object in a document. (Optional)
-   * 
+   * @param {Number} data.position Which object should the given value be appended to? Defaults to the last object in a document. (Optional)
    * @param {String} directory.dir The directory in which the document exists.
    * 
    * @example > db.append({id: "7", key: "bill", child: "career", value: "Mechanical Engineer", position: 1});
-   * @example > db.append({id: "5678", key: "real", value: "true"}, {dir: `${__dirname}/data/`});
    * 
-   * @returns `Array|Object`
+   * @returns {Object} the document after the given data is appended.
    */
 
-  append(data = {id, key, child, value, position}, directory = {dir: this.path}) {
+  append(data = {id, key: undefined, value, position}, directory = {dir: this.path}) {
     if(!(data instanceof Object)) return console.log("Your 'data' argument must be an Object.");
     if(!data.id) return console.log("You need to provide an identifier in order to locate the document to change.");
     if(!data.key || !data.value) return console.log("You need to provide a 'key' and 'value' in order to append to the given document.");
-    data.position = !data.position ? 0 : data.position;
-    data.id = (data.id).toString();
-    data.value = data.value == "false" ? false : data.value == "true" ? true : data.value;
       if(fs.existsSync(`${directory.dir}${data.id}.json`) == false) return console.log(`Unable to locate the document "${id}.json". It does not exist.`);
       let file = fs.readFileSync(`${directory.dir}${data.id}.json`);
-      let temp;
       let appended = false;
       file = JSON.parse(file);
-    if(!Array.isArray(file) && typeof file == "object") { // OBJECT ONLY
-      if(data.child) {
-        if(!file[data.key]) return console.log("Unable to append the document. The given 'key' must exist to append a child to it.");
-        ((file[data.key])[data.child]) = data.value;
-        appended = true;
-      } else {
-        file[data.key] = data.value;
-        appended = true;
+      if(file instanceof Object) {// .insert() file
+        file = file[0]
+        console.log(1);
+        if(!file[data.key]) {
+          console.log(3);
+          file[data.key] = data.value;
+          appended = true;
+        } else if(file[data.key] && file[data.key] instanceof Array) { // The key being appended exists & is an array
+          (file[data.key]).push(data.value);
+          appended = true;
+          console.log(2);
+        }
+        console.log(file);
+        file = [file];
+        file = JSON.stringify(file, null, 3);
+        fs.writeFileSync(`${directory.dir}${data.id}.json`, file);
+          this.feedback == true ? console.log(appended ? "Successfully appended data to 1 document." : "Couldn't append data to 1 document.") : "";
+          this.log == true ? Logger(appended ? `[ ${new Date()} - append() ] Successfully appended data to "${data.id}".` : `[ ${new Date()} - append() ] Coudln't append data to "${data.id}".`) : ""
+          return JSON.parse(file);
+      } else if(file instanceof Array) {
+        console.log(1);
+        if((file[data.position || (file.length)-1])[data.key] && (file[data.position || (file.length)-1])[data.key] instanceof Array) {
+          ((file[data.position || (file.length)-1])[data.key]).push(data.value);
+          appended = true;
+        } else {
+          (file[data.position || (file.length)-1])[data.key] = data.value;
+          appended = true;
+        }
+        file = JSON.stringify(file, null, 3);
+        fs.writeFileSync(`${directory.dir}${data.id}.json`, file);
+          this.feedback == true ? console.log(appended ? "Successfully appended data to 1 document." : "Couldn't append data to 1 document.") : "";
+          this.log == true ? Logger(appended ? `[ ${new Date()} - append() ] Successfully appended data to "${data.id}".` : `[ ${new Date()} - append() ] Coudln't append data to "${data.id}".`) : ""
+          return JSON.parse(file);
       }
-      temp = file;
-      file = JSON.stringify([file], null, 3);
-      fs.writeFileSync(`${directory.dir}${data.id}.json`, file);
-        this.feedback == true ? console.log(appended ? "Successfully appended data to 1 document." : "Couldn't append data to 1 document.") : "";
-        this.log == true ? Logger(appended ? `[ ${new Date()} - append() ] Successfully appended data to "${data.id}".` : `[ ${new Date()} - append() ] Coudln't append data to "${data.id}".`) : ""
-        return temp;
-    } else if(Array.isArray(file)) { // Is array
-      let target = file[data.position];
-      if(data.child) {
-        if(!target[data.key]) return console.log("Unable to append the document. The given 'key' must exist to append a child to it.");
-        ((target[data.key])[data.child]) = data.value;
-        appended = true;
-      } else {
-        target[data.key] = data.value;
-        appended = true;
-      }
-      temp = file;
-      file = JSON.stringify(file, null, 3);
-      fs.writeFileSync(`${directory.dir}${data.id}.json`, file);
-        this.feedback == true ? console.log(appended ? "Successfully appended data to 1 document." : "Couldn't append data to 1 document.") : "";
-        this.log == true ? Logger(appended ? `[ ${new Date()} - append() ] Successfully appended data to "${data.id}".` : `[ ${new Date()} - append() ] Coudln't append data to "${data.id}".`) : "";
-        return temp;
-    }
   }
 
     /**
@@ -443,10 +447,11 @@ class WastefulDB {
      * 
      * @param {String} [directory.dir] The directory to collect all the documents from.
      * 
-     * @returns `Array` 
      * 
      * @example > db.collect();
      * @example > db.collect({dir: `${__dirname}/data/`});
+     * 
+     * @returns {Array} array of all documents in the given directory.
      */
 
     collect(directory = {dir: this.path}) {
@@ -474,12 +479,13 @@ class WastefulDB {
 
     /**
      * Search the given directory for a specified identifier regardless of file name.
+     * @async
      * @param {String} data Identifier to scan for in each file.
      * @param {String} [data.dir] Specific directory to search for a file.
      * 
-     * @return `Object`
-     * 
      * @example > db.get({id: "1234", dir: `${__dirname}/data/`}, (result) => { console.log(result); });
+     * 
+     * @returns {Object} document object in a callback function.
      */
 
      get(data = {id, dir}, callback) {
@@ -551,9 +557,9 @@ class WastefulDB {
      * @param {Object | String} data Provide the identifier of a file to view if it currently exists.
      * @param {String} [directory.dir] Specific directory to check for an existing file.
      * 
-     * @return `Boolean`
-     * 
      * @example > db.check("1234", {dir: `${__dirname}/data/`});
+     * 
+     * @returns {Boolean} boolean regarding a document's existence.
      */
 
     check(data, directory = {dir: this.path}) {
@@ -567,11 +573,11 @@ class WastefulDB {
 
     /**
      * Returns the total amount of files in the default or given directory where documents are read/written.
-     * @param {String} [directory.dir] Specific directory to retrieve the file count from.
-     * 
-     * @return `Number`
+     * @param {String} [directory.dir] Specific directory to retrieve the file count from. Defaults to `./wastefuldb/data/`.
      * 
      * @example > db.size({dir: `${__dirname}/data/`});
+     * 
+     * @returns {Number} amount of files in the given directory.
      */
 
     size(directory = {dir: this.path}) {
@@ -658,6 +664,8 @@ class WastefulDB {
      * @param options.dir What directory to pull and update the document from.
      * 
      * @example > db.set("1234", {name: "Seth R. Richardson", active: true}, {dir: `${__dirname}/data/`})
+     * 
+     * @returns {Object} document object after being set.
      */
     set(id, data, directory = {dir: this.path}) {
       id = id.toString();
@@ -672,6 +680,7 @@ class WastefulDB {
          fs.writeFileSync(`${directory.dir}${id}.json`, data);
           this.feedback == true ? console.log(`Successfully overwritten 1 document.`) : "";
           this.log == true ? Logger(`[ ${new Date()} - set() ] File "${id}" was successfully overwritten.`) : ""
+          return JSON.parse(data);
        }catch(err){
          if(this.kill == true) {
            throw new Error(err.message);
