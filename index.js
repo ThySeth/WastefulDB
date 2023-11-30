@@ -1,4 +1,6 @@
 const fs = require('fs');
+require("./functions/updateMath.js");
+
 let cache = [];
 
 function Logger(data) {
@@ -169,6 +171,37 @@ class WastefulDB {
      * 
      * @returns {Object} document object after updating the data.
      */
+
+    up(data = {id, key, child, change, math: false}, directory = {dir: this.path}) {
+      try {
+        if(!data.id || !data.key || !data.change) return console.error("[.update] : You must provide the required fields to update a document.");
+        data.id = (data.id).toString();
+        let file = fs.readFileSync(`${directory.dir}${data.id}.json`); file = JSON.parse(file);
+
+        if(file instanceof Object) {                            // The object isn't an array. It was created using .insert()
+          if(!file.hasOwnProperty(data.key)) return console.error("[.update] : Unable to update the document. The given key does not exist!");
+          if(file.hasOwnProperty(data.key)) {                   // The key exists
+            if((file[data.key]).hasOwnProperty(data.child)) {   // The key's child exists
+              if(math) {                                        // Math has been set to TRUE
+                if((objectMath(file, data)) == -1) return console.error("[.update] : The document cannot be updated. The target change, key, or child in the document was returned as NaN.");
+                (file[data.key])[data.child] = (file[data.key])[data.child] + (data.change);
+              } else {                                          // Math is set to FALSE
+                (file[data.key])[data.child] = data.change;
+              }
+            } else {                                            // The key's child DOESN'T exist
+              if(math) {                                        // Math has been set to TRUE
+                if((objectMath(file, data)) == -1) return console.error("[.update] : The document cannot be updated. The target change or key in the document was returned as NaN.");
+                file[data.key] = file[data.key] + (data.change);
+              } else {                                          // Math is set to FALSE
+                file[data.key] = data.change;
+              }
+            }
+          }
+        }
+      } catch(err) {
+
+      }
+    }
     
      update(data = {id, key, child, change, math:false}, directory = {dir: this.path}) { 
       let obj, files;
