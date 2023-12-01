@@ -1,4 +1,5 @@
 const fs = require('fs');
+const { objectMath } = require('./functions/updateMath.js');
 require("./functions/updateMath.js");
 
 let cache = [];
@@ -16,6 +17,22 @@ function Logger(data) {
   }catch(err){
     console.log(`An error occurred while logging a process.\n${err}`);
   }
+}
+
+function BNS(text) {
+  // Boolean & Null Stringification
+  switch(text) {
+    case "true":
+      text = true;
+    break;
+    case "false":
+      text = false;
+    break;
+    case "null":
+      text = null;
+    break;
+  }
+  return text;
 }
 
 class WastefulDB {
@@ -172,34 +189,80 @@ class WastefulDB {
      * @returns {Object} document object after updating the data.
      */
 
+    
+
     up(data = {id, key, child, change, math: false}, directory = {dir: this.path}) {
       try {
-        if(!data.id || !data.key || !data.change) return console.error("[.update] : You must provide the required fields to update a document.");
+        if(!data.id || !data.key || !data.change) return console.error("[.update] : You must provide the required fields 'id', 'key', and 'change' to update a document.");
         data.id = (data.id).toString();
+        data.change = BNS(data.change); // Ensures that boolean and null are converted from string to their own data type
         let file = fs.readFileSync(`${directory.dir}${data.id}.json`); file = JSON.parse(file);
-
-        if(file instanceof Object) {                            // The object isn't an array. It was created using .insert()
+        if(file instanceof Object) {  // The object isn't an array. It was created using .insert()
           if(!file.hasOwnProperty(data.key)) return console.error("[.update] : Unable to update the document. The given key does not exist!");
-          if(file.hasOwnProperty(data.key)) {                   // The key exists
-            if((file[data.key]).hasOwnProperty(data.child)) {   // The key's child exists
-              if(math) {                                        // Math has been set to TRUE
-                if((objectMath(file, data)) == -1) return console.error("[.update] : The document cannot be updated. The target change, key, or child in the document was returned as NaN.");
-                (file[data.key])[data.child] = (file[data.key])[data.child] + (data.change);
-              } else {                                          // Math is set to FALSE
-                (file[data.key])[data.child] = data.change;
-              }
-            } else {                                            // The key's child DOESN'T exist
-              if(math) {                                        // Math has been set to TRUE
-                if((objectMath(file, data)) == -1) return console.error("[.update] : The document cannot be updated. The target change or key in the document was returned as NaN.");
-                file[data.key] = file[data.key] + (data.change);
-              } else {                                          // Math is set to FALSE
-                file[data.key] = data.change;
-              }
+          if(data.child && !file[data.key].hasOwnProperty(data.child)) return console.error("[.update] : Unable to update the document. The given child key does not exist!");
+          if(data.child) {                    // The process involves updating a child key
+           if(data.change == "undefined") {   // Specifying "undefined" in a change will delete the object
+              delete (file[data.key])[data.child];
+           } else {
+            if(math) {                
+              if((objectMath(file, data)) == -1) return console.error("[.update] : The document cannot be updated. The target change, key, or child in the document was returned as NaN.");
+              (file[data.key])[data.child] = (file[data.key])[data.child] + (data.change);
+            } else {
+              (file[data.key])[data.child] = data.change;
             }
+           }
+          } else {                            // This process involves updating a key
+           if(data.change == "undefined") {   // Object deletion
+              delete file[data.key];
+           } else {
+            if(math) {
+              if((objectMath(file, data)) == -1) return console.error("[.update] : The document cannot be updated. The target change, key, or child in the document was returned as NaN.");
+              file[data.key] = file[data.key] + (data.change);
+            } else {
+              file[data.key] = data.change;
+            }
+           }
           }
+        } else if(file instanceof Array) {  // The object is an array. It was created using .insertBulk()
+          file.forEach(object => {              // Sifts through each object in an array.
+            if(!object.hasOwnProperty(data.key)) return console.error("[.update] : Unable to update the document. The given key does not exist!");  // The specific object in the array doesn't have the key.           
+              if(object.hasOwnProperty(data.key) && (data.child ? !object[data.key].hasOwnProperty(data.child) : "")) return console.error("[.update] : Unable to update the document. The given child key does not exist!");
+                if(data.child) { // A child key is specified
+                 if(data.change == "undefined") { // Object deletion
+                    delete (object[data.key])[data.child];
+                 } else {
+                  if(math) {
+                    if((objectMath(object, data)) == -1) return console.error("[.update] : The document cannot be updated. The target change, key, or child in the document was returned as NaN.");
+                    (object[data.key])[data.child] = (object[data.key])[data.child] + (data.change);
+                  } else {
+                    (object[data.key])[data.child] = data.change;
+                  }
+                 }
+                } else { // A child key isn't specified
+                  if(data.change == "undefined") {
+                    delete object[data.key];
+                  }
+                  if(math) {
+                    if((objectMath(object, data)) == -1) return console.error("[.update] : The document cannot be updated. The target change, key, or child in the document was returned as NaN.");
+                    object[data.key] = object[data.key] + (data.change);
+                  } else {
+                    object[data.key] = data.change;
+                  }
+                }
+          })
         }
-      } catch(err) {
+        file = JSON.stringify(file, null, 3);
+        fs.writeFileSync(`${directory.dir}${data.id}.json`, file);
 
+        this.feedback == true ? console.log("[.update] Successfully updated 1 document.") : "";
+        this.log == true ? Logger(`[ ${new Date()} - update() ] File "${data.id}" was successfully updated.`) : "";
+      } catch(err) {
+        if(this.kill == true) {
+          throw new Error(err.message);
+        } else {
+          console.error("An error occurred: " + err.message);
+        }
+      this.log == true ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing .update!`) : ""
       }
     }
     
