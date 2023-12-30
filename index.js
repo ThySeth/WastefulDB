@@ -1,7 +1,5 @@
 const fs = require('fs');
 const { objectMath } = require('./functions/updateMath.js');
-const { CLIENT_RENEG_WINDOW } = require('tls');
-require("./functions/updateMath.js");
 
 let cache = [];
 
@@ -10,7 +8,7 @@ function Logger(data) {
     let text, file = fs.existsSync(`${__dirname}/logger.txt/`);
      if(file){
       file = fs.readFileSync(`${__dirname}/logger.txt/`);
-      text = `${data}\n${file}`
+      text = `${data}\n \n${file}`
       fs.writeFileSync(`${__dirname}/logger.txt/`, text);
      } else {
       fs.writeFileSync(`${__dirname}/logger.txt/`, data)
@@ -61,41 +59,30 @@ class WastefulDB {
      * @param {String} data.id A required identifier to name and track the file.
      * @param {String} [directory.dir] A specific directory to route the creation of files.
      * 
-     * @example > db.insert({id: "5523", name: "Margot", pass: "HelloWorld~", active: false}, {dir: `${__dirname}/data/`});
+     * @example > db.insert({id: "5523", name: "Margot", pass: "HelloWorld!", active: false}, {dir: `${__dirname}/data/`});
      * 
      * @returns {Array} array containing data within document.
      */
 
-     insert(data={id}, directory = {dir: this.path}) {
-      if(!(data instanceof Object)) return console.log("Information given must be an Object."); 
+     insert(data = {id: undefined}, directory = {dir: this.path}) {
+      if(!(data instanceof Object)) return console.error("[.insert] : The data given must be contained within an Object."); // Check if 'data' is an object data type
+       if(!data.id && !this.serial) return console.error("[.insert] : A document identifier must be provided before it can be created!"); // Ensures there is an identifier to assign if serialization is false
       try {
-        let obj, altid=false, dirsize = fs.readdirSync(directory.dir); dirsize = dirsize.length;
-      if(this.serial == true) {
-          (data.id > 0) ? data._id = dirsize : data.id = dirsize; data.id ? altid=true : altid;
-           obj = [ data ]; obj = JSON.stringify(obj, null, 3);
-            fs.writeFileSync(`${directory.dir}${data._id || data.id}.json`, obj);
-             this.feedback == true ? console.log(`Successfully created 1 document. ( ${data._id || data.id}.json )`) : "";
-             this.log == true ? Logger(`[ ${new Date()} - insert() ] File "${data.id}" was successfully created.`) : ""
-              return JSON.parse(obj);
-      } else {
-       if(!data.id) return console.log("Cannot create document without a valid 'id' key and value.");
-       obj = [data]
-        obj = JSON.stringify(obj, null, 3);
-         fs.writeFileSync(`${directory.dir}${data.id}.json`, obj);
-         this.feedback == true ? console.log("Successfully created 1 document.") : "";
-         this.log == true ? Logger(`[ ${new Date()} - insert() ] File "${data.id}" was successfully created.`) : ""
-          return JSON.parse(obj);
-       }
-      }
-      catch(err) {
+        this.serial ? data.id = ((fs.readdirSync(directory.dir)).length).toString() : ""; // Assign an identifier to the document if serialization is true. Ignores/replaces an existing identifier
+         let obj = JSON.stringify([data], null, 3); // Format data for writing
+          fs.writeFileSync(`${directory.dir}${data.id}.json`, obj);
+           this.feedback == true ? console.log("[.insert] : Successfully created 1 document.") : "";
+           this.log == true ? Logger(`[ ${new Date()} - insert() ] File "${data.id}" was successfully created.`) : ""
+            return JSON.parse(obj); // Parse the json-ified data, keeping the new format
+      } catch(err) {
         if(this.kill == true) {
-            throw new Error(err.message);
+          throw new Error(err.message);
         } else {
           console.log("Error: " + err.message);
         }
-        this.log == true ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "insert()"!`) : ""
+        this.log == true ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "insert()"!\n${err.message}`) : ""
       }
-  }
+     }
     
     /**
      * Create a bulk document containing an Array of Objects.
@@ -106,36 +93,35 @@ class WastefulDB {
      * 
      * @returns {Array} array containing data within document.
      */
-     insertBulk(data = [], directory = {dir: this.path}) {    
-        let cancel = false;
-        try {
-         if((!(data instanceof Array)) || data.length == 1) return console.log("More than one Object must be stored within an Array.");
-          if(!data[0]) return console.log("Objects must be stored within the data Array.");
-           if(!(data.find(foo => foo.id).id) && this.serial == false) return console.log("You must provide an \"id\" within an Object.");       
-        data.forEach(item => {
-          if(cancel == true) return;
-            if(!(item instanceof Object)) {
-                cancel = true;
-                 return console.log("Unable to create document. One or more items in Array are not an Object.");
-            } else {
-                return;
-            }
-        })
-        if(cancel == false) {
-        let id = data.find(foo => foo.id); id = id.id;
-          let obj = JSON.stringify(data, null, 3);
-            fs.writeFileSync(`${directory.dir}${id}.json`, obj);
-             this.feedback == true ? console.log("Successfully created 1 document.") : "";
-             this.log == true ? Logger(`[ ${new Date()} - insertBulk() ] File "${id.id}" was successfully created.`) : ""
-              return JSON.parse(obj);
+
+     insertBulk(data = [], directory = {dir: this.path}) {
+      if(!(data instanceof Array)) return console.error("[.insertBulk] : The data provided must be Objects contained within an Array."); // If the argument for data isn't an array data type, return error
+       if(data.length <= 1) return console.error("[.insertBulk] : The data array must contain more two more more Objects.");
+        if(!data.find((value) => (Object.keys(value)).includes("id")) && !this.serial) return console.error("[.insertBulk] : You must provide an \"id\" within an Object."); // Check if an identifier is declared when serialization is false
+         if(!data.every((value) => value instanceof Object)) return console.error("[.insertBulk] : Unable to process data. One or more items in the data array is not an Object."); // Check if any items in the data array are not an object data type
+      try {
+        // (this.serial) ? data.find((value) => (Object.keys(value)).includes("id")).id = ((fs.readdirSync(directory.dir)).length).toString() : "" // Find and set 
+        if(this.serial) {
+          /*
+            Deconstructing the statement below
+            1) "data.find((value) => (Object.keys(value)).includes("id")) ?"                                                        --> If the array has an existing "id" variable, use it instead of creating a new one
+            2) "data.find((value) => (Object.keys(value)).includes("id")).id = ((fs.readdirSync(directory.dir)).length).toString()" --> Replaces the existing id with the serialized version
+            3) ": data[0].id = ((fs.readdirSync(directory.dir)).length).toString();"                                                --> If the array does not have an existing "id" variable, create a new one in the first object of the array
+          */
+          data.find((value) => (Object.keys(value)).includes("id")) ? data.find((value) => (Object.keys(value)).includes("id")).id = ((fs.readdirSync(directory.dir)).length).toString() : data[0].id = ((fs.readdirSync(directory.dir)).length).toString();
         }
+        let id = data.find((value) => (Object.keys(value)).includes("id")).id, obj = JSON.stringify(data, null, 3);
+         fs.writeFileSync(`${directory.dir}${id}.json`, obj);
+          this.feedback == true ? console.log("[.insertBulk] : Successfully created 1 document.") : "";
+          this.log == true ? Logger(`[ ${new Date()} - insertBulk() ] File "${id.id}" was successfully created.`) : ""
+           return JSON.parse(obj);
       } catch(err) {
-          if(this.kill == true) {
-              throw new Error(err.message);
-          } else {
-              console.log("Error: " + err.message);
-          }
-          this.log == true ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "insertBulk()"!`) : ""
+        if(this.kill == true) {
+          throw new Error(err.message);
+        } else {
+          console.log("Error: " + err.message);
+        }
+        this.log == true ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "insertBulk()"!\n${err.message}`) : ""
       }
      }
 
@@ -154,13 +140,13 @@ class WastefulDB {
         if((fs.existsSync(`${directory.dir}${(data.id || data).toString()}.json`) == false) && this.standard[0] == true) {
           let newFile = this.standard[1]; newFile.id = (data.id || data); newFile = JSON.stringify([newFile])
           fs.writeFileSync(`${directory.dir}${(data.id || data).toString()}.json`, newFile)
-          this.feedback == true ? console.log("Successfully found 1 document.") : "";
+          this.feedback == true ? console.log("[.find] : Successfully found 1 document.") : "";
           this.log == true ? Logger(`[ ${new Date()} - find() ] File "${data.id || data}" was unsuccessfully found. Document defaulted.`) : ""
           return JSON.parse(newFile)
         } else {
         let info = fs.readFileSync(`${directory.dir}${(data.id || data).toString()}.json`);
           info = JSON.parse(info);
-          this.feedback == true ? console.log("Successfully found 1 document.") : "";
+          this.feedback == true ? console.log("[.find] : Successfully found 1 document.") : "";
           this.log == true ? Logger(`[ ${new Date()} - find() ] File "${data.id || data}" was successfully found.`) : ""
           info = info.length > 1 ? info : info[0];
            return info;
@@ -171,7 +157,7 @@ class WastefulDB {
         } else {
           console.log("Error: " + err.message);
         }
-        this.log == true ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "find()"!`) : ""
+        this.log == true ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "find()"!\n${err.message}`) : ""
       }
     }
     
@@ -264,13 +250,14 @@ class WastefulDB {
 
         this.feedback == true ? console.log("[.update] Successfully updated 1 document.") : "";
         this.log == true ? Logger(`[ ${new Date()} - update() ] File "${data.id}" was successfully updated.`) : "";
+        return JSON.parse(file);
       } catch(err) {
         if(this.kill == true) {
           throw new Error(err.message);
         } else {
           console.error("An error occurred: " + err.message);
         }
-      this.log == true ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing .update!`) : ""
+      this.log == true ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing .update!\n${err.message}`) : ""
       }
     }
 
@@ -289,9 +276,9 @@ class WastefulDB {
     let obj, foo, bar;
      try {
        // CATCH MISSING ARGUMENTS
-        if(!(id instanceof String) && (id instanceof Object && !id.id)) return console.error("Unable to locate document due to missing identifier argument."); if(!(data instanceof Array) || data.length <= 1) return console.error("The data provided must be contained within an Array and have more than 1 Object.");
+        if(!(id instanceof String) && (id instanceof Object && !id.id)) return console.error("[.mupdate] : Unable to locate document due to missing identifier argument."); if(!(data instanceof Array) || data.length <= 1) return console.error("The data provided must be contained within an Array and have more than 1 Object.");
         id = id.id ? id.id : id; // Handle alternative object form for identifiers
-        if(fs.existsSync(`${directory.dir}${id}.json`) == false) return console.log("Couldn't find any documents with the given identifier.");
+        if(fs.existsSync(`${directory.dir}${id}.json`) == false) return console.error("[.mupdate] : Couldn't find any documents with the given identifier.");
         // OPEN DOCUMENT
           obj = fs.readFileSync(`${directory.dir}${id}.json`); obj = JSON.parse(obj);
            // IF OBJ IS GREATER THAN 1 OBJECT <---
@@ -306,7 +293,7 @@ class WastefulDB {
                        if(thing.child) {
                         // IF DATA INVOLVES MATH <---
                          if(thing.math) {
-                          if(isNaN((item[thing.key])[thing.child]) || isNaN(thing.change)) return console.log("Given key or change returned NaN.");
+                          if(isNaN((item[thing.key])[thing.child]) || isNaN(thing.change)) return console.error("[.mupdate] : Unable to update the document. The given key or change returned NaN.");
                            (item[thing.key])[thing.child] = (Number((item[thing.key])[thing.child])) + (Number(thing.change));
                             (item[thing.key])[thing.child] = (item[thing.key])[thing.child] % 1 != 0 ? parseFloat(((item[thing.key])[thing.child]).toFixed(2)) : (item[thing.key])[thing.child];
                              // CONTINUE ONWARD
@@ -320,7 +307,7 @@ class WastefulDB {
                         // IF DATA HAS NO CHILD <---
                          // IF DATA INVOLVES MATH <---
                          if(thing.math) {
-                           if(isNaN(item[thing.key]) || isNaN(thing.change)) return console.error("Given key or change returned NaN.");
+                           if(isNaN(item[thing.key]) || isNaN(thing.change)) return console.error("[.mupdate] : Unable to update the document. The given key or change returned NaN.");
                             item[thing.key] = (Number(item[thing.key])) + (Number(thing.change));
                              item[thing.key] = item[thing.key] % 1 != 0 ? (parseFloat((item[thing.key]).toFixed(2))) : item[thing.key];
                               // CONTINUE ONWARD
@@ -335,7 +322,7 @@ class WastefulDB {
               })
                bar = JSON.stringify(obj, null, 3);
                 fs.writeFileSync(`${directory.dir}${id}.json`, bar);
-                 this.feedback == true ? console.log("Successfully mupdated 1 bulk document.") : "";
+                 this.feedback == true ? console.log("[.mupdate] : Successfully updated 1 bulk document.") : "";
                  this.log == true ? Logger(`[ ${new Date()} - mupdate() ] File "${data.id}" was successfully updated.`) : ""
                  return JSON.parse(bar);
             } else {
@@ -348,7 +335,7 @@ class WastefulDB {
                        if(item.child) {
                          // IF DATA INVOLVES MATH <---
                           if(item.math) {
-                            if(isNaN((obj[item.key])[item.child]) || isNaN(item.change)) return console.error("Given key or change returned NaN.");
+                            if(isNaN((obj[item.key])[item.child]) || isNaN(item.change)) return console.error("[.mupdate] : Unable to update the document. The given key or change returned NaN.");
                               (obj[item.key])[item.child] = (Number((obj[item.key])[item.child])) + (Number(item.change));
                                (obj[item.key])[item.child] = (obj[item.key])[item.child] % 1 != 0 ? parseFloat(((obj[item.key])[item.child]).toFixed(2)) : (obj[item.key])[item.child];
                                 // CONTINUE ONWARD
@@ -362,7 +349,7 @@ class WastefulDB {
                          // IF DATA HAS NO CHILD <---
                           // IF DATA INVOLVES MATH <---
                            if(item.math) {
-                             if(isNaN(obj[item.key]) || isNaN(item.change)) return console.error("Given key or change returned NaN.");
+                             if(isNaN(obj[item.key]) || isNaN(item.change)) return console.error("[.mupdate] : Unable to update the document. The given key or change returned NaN.");
                               obj[item.key] = (Number(obj[item.key])) + (Number(item.change));
                                obj[item.key] = obj[item.key] % 1 != 0 ? parseFloat((obj[item.key]).toFixed(2)) : obj[item.key];
                                 // CONTINUE ONWARD
@@ -377,7 +364,7 @@ class WastefulDB {
                 obj = [ obj ];
                  bar = JSON.stringify(obj, null, 3);
                   fs.writeFileSync(`${directory.dir}${id}.json`, bar);
-                   this.feedback == true ? console.log("Successfully mupdated 1 document.") : "";
+                   this.feedback == true ? console.log("[.mupdate] : Successfully updated 1 document.") : "";
                    this.log == true ? Logger(`[ ${new Date()} - mupdate() ] File "${data.id}" was successfully updated.`) : ""
                    return JSON.parse(bar);
             }
@@ -387,7 +374,7 @@ class WastefulDB {
         } else {
             console.error("Error: " + err.message);
         }
-        this.log == true ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "mupdate()"!`) : ""
+        this.log == true ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "mupdate()"!\n${err.message}`) : ""
      }
   }
 
@@ -404,11 +391,26 @@ class WastefulDB {
    * @returns {Object} the document after the given data is appended.
    */
 
+  /**
+   * @param {String} data.id The identifier of the document to modify.
+   * @param {String} data.key The name of the key to append.
+   * @param {String} [data.child] The child key of the given key.
+   * @param {String | Object} data.value The value to assign to the given key.
+   * @param {Number} [data.position] What position should the new key be placed in the Object/Array?
+   */
+
+  app(data = {id, key, child, value, position: 0}, directory = {dir: this.path}) {
+    if(!(data instanceof Object)) return console.error("[.append] : The data provided must be contained within an Object.");
+     if(!data.id) return console.error("[.append] : You must provide an identifier to the document you want to modify.");
+      if(data.child && !data.key) return console.error("[.append] : A \"key\" argument must be specified along with the child key specified.");
+       
+  }
+
   append(data = {id, key: undefined, value, position}, directory = {dir: this.path}) {
-    if(!(data instanceof Object)) return console.log("Your 'data' argument must be an Object.");
-    if(!data.id) return console.log("You need to provide an identifier in order to locate the document to change.");
-    if(!data.key || !data.value) return console.log("You need to provide a 'key' and 'value' in order to append to the given document.");
-      if(fs.existsSync(`${directory.dir}${data.id}.json`) == false) return console.log(`Unable to locate the document "${id}.json". It does not exist.`);
+    if(!(data instanceof Object)) return console.log("[.append] : Your 'data' argument must be an Object.");
+    if(!data.id) return console.log("[.append] : You need to provide an identifier in order to locate the document to change.");
+    if(!data.key || !data.value) return console.log("[.append] : You need to provide a 'key' and 'value' in order to append to the given document.");
+      if(fs.existsSync(`${directory.dir}${data.id}.json`) == false) return console.log(`[.append] : Unable to locate the document "${id}.json". It does not exist.`);
       let file = fs.readFileSync(`${directory.dir}${data.id}.json`);
       let appended = false;
       file = JSON.parse(file);
@@ -428,7 +430,7 @@ class WastefulDB {
         file = [file];
         file = JSON.stringify(file, null, 3);
         fs.writeFileSync(`${directory.dir}${data.id}.json`, file);
-          this.feedback == true ? console.log(appended ? "Successfully appended data to 1 document." : "Couldn't append data to 1 document.") : "";
+          this.feedback == true ? console.log(appended ? "[.append] : Successfully appended data to 1 document." : "[.append] : Couldn't append data to 1 document.") : "";
           this.log == true ? Logger(appended ? `[ ${new Date()} - append() ] Successfully appended data to "${data.id}".` : `[ ${new Date()} - append() ] Coudln't append data to "${data.id}".`) : ""
           return JSON.parse(file);
       } else if(file instanceof Array) {
@@ -442,7 +444,7 @@ class WastefulDB {
         }
         file = JSON.stringify(file, null, 3);
         fs.writeFileSync(`${directory.dir}${data.id}.json`, file);
-          this.feedback == true ? console.log(appended ? "Successfully appended data to 1 document." : "Couldn't append data to 1 document.") : "";
+          this.feedback == true ? console.log(appended ? "[.append] : Successfully appended data to 1 document." : "[.append] : Couldn't append data to 1 document.") : "";
           this.log == true ? Logger(appended ? `[ ${new Date()} - append() ] Successfully appended data to "${data.id}".` : `[ ${new Date()} - append() ] Coudln't append data to "${data.id}".`) : ""
           return JSON.parse(file);
       }
@@ -471,7 +473,7 @@ class WastefulDB {
         file = JSON.parse(file); 
         file.length > 1 ? obj.push(file) : obj.push(file[0]);
       });
-       this.feedback == true ? console.log("Successfully collected all documents in the directory.") : "";
+       this.feedback == true ? console.log("[.collect] : Successfully collected all documents in the directory.") : "";
        this.log == true ? Logger(`[ ${new Date()} - collect() ] Successfully collected documents in the directory "${directory.dir}".`) : ""
         obj = obj.length == 0 ? -1 : obj;
          return obj;
@@ -481,7 +483,7 @@ class WastefulDB {
        } else {
         console.log(`Error: ${err.message}`);
        }
-       this.log == true ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "collect()"!`) : ""
+       this.log == true ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "collect()"!\n${err.message}`) : ""
      }
     }
 
@@ -500,7 +502,7 @@ class WastefulDB {
       data.dir == undefined ? data.dir = this.path : data.dir;
         try {
         let end = false;
-        if(!(data instanceof Object)) return new Error("Unable to perform 'get' function due to 'data' variable not containing Object with query.");
+        if(!(data instanceof Object)) return console.error("[.get] : Unable to perform 'get' function due to 'data' variable not containing Object with query.");
                 let files = fs.readdirSync(`${data.dir}`)
                  files.forEach(file => {
                     if(end == true) return;
@@ -511,7 +513,7 @@ class WastefulDB {
                         let find = obj.filter(i => i["id"]);
                          if(find) {
                              if(find[0].id == (data.id || data).toString()) {
-                                 this.feedback == true ? console.log("Successfully retrieved 1 document.") : "";
+                                 this.feedback == true ? console.log("[.get] : Successfully retrieved 1 document.") : "";
                                  this.log == true ? Logger(`[ ${new Date()} - get() ] File "${data.id}" was successfully retrieved.`) : ""
                                   end = true;
                                    return callback(obj);
@@ -521,11 +523,11 @@ class WastefulDB {
                         console.log(2);
                           obj = obj[0];
                           let dataAtt = Object.entries(data); dataAtt = dataAtt[0];
-                           if(!obj) return new Error("File abnormality occurred whilst attempting to read.\nFile name: " + file);
+                           if(!obj) return console.error("[.get] : File abnormality occurred whilst attempting to read.\nFile name: " + file);
                         if(!data.id) {
                             Object.entries(obj).forEach((item) => {
                                 if(item[0] == dataAtt[0] && item[1] == dataAtt[1]) {
-                                    this.feedback == true ? console.log("Successfully retrieved 1 document.") : "";
+                                    this.feedback == true ? console.log("[.get] : Successfully retrieved 1 document.") : "";
                                     this.log == true ? Logger(`[ ${new Date()} - get() ] File "${data.id}" was successfully retrieved.`) : ""
                                     end = true;
                                      return callback(obj);
@@ -536,7 +538,7 @@ class WastefulDB {
                         } else{
                          data.id = (data.id).toString();
                             if(obj.id == data.id) {
-                                this.feedback == true ? console.log("Successfully retrieved 1 document.") : "";
+                                this.feedback == true ? console.log("[.get] : Successfully retrieved 1 document.") : "";
                                 this.log == true ? Logger(`[ ${new Date()} - get() ] File "${data.id}" was successfully retrieved.`) : ""
                                 end = true;
                                  return callback(obj);
@@ -547,7 +549,7 @@ class WastefulDB {
                     }
                  })
                  if(end == false) {
-                     this.feedback == true ? console.log("Unable to retrieve any documents pertaining to the given query.") : "";
+                     this.feedback == true ? console.log("[.get] : Unable to retrieve any documents pertaining to the given query.") : "";
                  }
         }catch(err){
             if(this.kill == true) {
@@ -555,7 +557,7 @@ class WastefulDB {
             } else {
             console.log("Error: " + err.message);
             }
-            this.log == true ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "get()"!`) : ""
+            this.log == true ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "get()"!\n${err.message}`) : ""
         }
     }
 
@@ -576,7 +578,7 @@ class WastefulDB {
       } catch(err) {
         console.log("Error: " + err.message);
       }
-      this.log == true ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "check()"!`) : ""
+      this.log == true ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "check()"!\n${err.message}`) : ""
     }
 
     /**
@@ -598,7 +600,7 @@ class WastefulDB {
          } else {
             console.log("Error: " + err.message);
          }
-         this.log == true ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "size()"!`) : ""
+         this.log == true ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "size()"!\n${err.message}`) : ""
         }
     }
 
@@ -613,7 +615,7 @@ class WastefulDB {
     delete(data, directory = {dir: this.path}) {
         try {
             fs.rmSync(`${directory.dir}${(data.id || data).toString()}.json`);
-             this.feedback == true ? console.log("Successfully deleted 1 document.") : "";
+             this.feedback == true ? console.log("[.delete] : Successfully deleted 1 document.") : "";
              this.log == true ? Logger(`[ ${new Date()} - delete() ] File "${data.id}" was successfully deleted.`) : ""
         } catch(err) {
           if(this.kill == true) {
@@ -621,7 +623,7 @@ class WastefulDB {
           } else {
             console.log("Error: " + err.message);
           }
-          this.log == true ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "delete()"!`) : ""
+          this.log == true ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "delete()"!\n${err.message}`) : ""
         }
     }
 
@@ -640,19 +642,19 @@ class WastefulDB {
       options.from = options.from || this.path;
       options.force = options.force || false;
      try {
-      if(!id) return console.log("An identifier of a file to replicate must be provided.");
+      if(!id) return console.log("[.replicate] : An identifier of a file to replicate must be provided.");
       id = id.id || id;
-      if(fs.existsSync(`${options.to}/${id}.json`) > 0 && options.force == false) return console.log(`The provided document already exists in the directory "${options.to}". Move or delete the document in order to replicate again.`);
+      if(fs.existsSync(`${options.to}/${id}.json`) > 0 && options.force == false) return console.error(`[.replicate] : The provided document already exists in the directory "${options.to}". Move or delete the document in order to replicate again.`);
       if(fs.existsSync(`${options.to}/${id}.json`) > 0 && options.force == true) {
-      if(fs.existsSync(`${options.to}/${id}_rep.json`) == true) return console.log(`Document "${options.from}/${id}.json" has already been replicated at the target destination.`);
+      if(fs.existsSync(`${options.to}/${id}_rep.json`) == true) return console.error(`[.replicate] : Document "${options.from}/${id}.json" has already been replicated at the target destination.`);
        let _data = fs.readFileSync(`${options.from}/${id}.json`);
         fs.writeFileSync(`${options.to}/${id}_rep.json`, _data);
-         this.feedback == true ? console.log(`Successfully forced replication of 1 document. ( ${options.from}/${id}.json > ${options.to}/${id}_rep.json )`) : "";
+         this.feedback == true ? console.log(`[.replicate] : Successfully forced replication of 1 document. ( ${options.from}/${id}.json > ${options.to}/${id}_rep.json )`) : "";
          this.log == true ? Logger(`[ ${new Date()} - replicate() ] File "${id}" was force replicated.`) : ""
       } else {
        let data = fs.readFileSync(`${options.from}/${id}.json`);
         fs.writeFileSync(`${options.to}/${id}.json`, data);
-         this.feedback == true ? console.log(`Successfully replicated 1 document.`) : "";
+         this.feedback == true ? console.log(`[.replicate] : Successfully replicated 1 document.`) : "";
          this.log == true ? Logger(`[ ${new Date()} - replicate() ] File "${id}" was successfully replicated.`) : ""
       }
      } catch(err) {
@@ -661,7 +663,7 @@ class WastefulDB {
        } else {
          console.log("Error: " + err.message);
        }
-       this.log == true ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "replicate()"!`) : ""
+       this.log == true ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "replicate()"!\n${err.message}`) : ""
      }
     }
 
@@ -677,16 +679,16 @@ class WastefulDB {
      */
     set(id, data, directory = {dir: this.path}) {
       id = id.toString();
-      if(!id || !(data instanceof Object)) return console.error("Unable to set a document due to a missing identifier or your data is not an Object.");
+      if(!id || !(data instanceof Object)) return console.error("[.set] : Unable to set a document due to a missing identifier or your data is not an Object.");
       id = id.id || id;
        try {
-        if(fs.existsSync(`${directory.dir}${id}.json`) == false) return console.error(`The given document identifier does not exist in this directory.`);
+        if(fs.existsSync(`${directory.dir}${id}.json`) == false) return console.error(`[.set] : The given document identifier does not exist in this directory.`);
         data.id = data.id || id;
         let file = fs.readFileSync(`${directory.dir}${id}.json`);
         cache = JSON.parse(file); cache.dir = directory.dir;
         data = JSON.stringify(data, null, 3);
          fs.writeFileSync(`${directory.dir}${id}.json`, data);
-          this.feedback == true ? console.log(`Successfully overwritten 1 document.`) : "";
+          this.feedback == true ? console.log(`[.set] : Successfully overwritten 1 document.`) : "";
           this.log == true ? Logger(`[ ${new Date()} - set() ] File "${id}" was successfully overwritten.`) : ""
           return JSON.parse(data);
        }catch(err){
@@ -695,7 +697,7 @@ class WastefulDB {
          } else {
            console.log("Error: " + err.message);
          }
-         this.log == true ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "set()"!`) : ""
+         this.log == true ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "set()"!\n${err.message}`) : ""
        }
     }
 
@@ -707,19 +709,19 @@ class WastefulDB {
 
     undo() {
       try {
-      if((Object.keys(cache[0])).length == 0) return console.log("There are no recent actions in the cache at this time.");
-       if(fs.existsSync(`${cache.dir}${cache[0].id}.json`) == false) return console.error("The file which was originally stored in the cache no longer exists.");
+      if((Object.keys(cache[0])).length == 0) return console.error("[.undo] : There are no recent actions in the cache at this time.");
+       if(fs.existsSync(`${cache.dir}${cache[0].id}.json`) == false) return console.error("[.undo] : The file which was originally stored in the cache no longer exists.");
         let dir = cache.dir; delete cache[1].dir;
         let data = JSON.stringify([cache[0]], null, 3);
          fs.writeFileSync(`${dir}${cache[0].id}.json`, data);
-          this.feedback == true ? console.log(`Successfully undone 1 change to document ${dir}${cache[0].id}.json`) : "";
+          this.feedback == true ? console.log(`[.undo] : Successfully undone 1 change to document ${dir}${cache[0].id}.json`) : "";
       }catch(err) {
         if(this.kill == true) {
           throw new Error(err.message);
         } else {
           console.log("Error: " + err.message);
         }
-        this.log == true ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "undo()"!`) : ""
+        this.log == true ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "undo()"!\n${err.message}`) : ""
       }
     }
     
