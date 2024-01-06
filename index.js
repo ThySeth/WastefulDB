@@ -379,75 +379,46 @@ class WastefulDB {
   }
 
   /**
-   * 
-   * @param {String} data.id The identifier of the document to modify.
-   * @param {String} data.key The key within the document to append the following 'value' to.
-   * @param {Object} data.value The 'value' or object to append to the given document.
-   * @param {Number} data.position Which object should the given value be appended to? Defaults to the last object in a document. (Optional)
-   * @param {String} directory.dir The directory in which the document exists.
-   * 
-   * @example > db.append({id: "7", key: "bill", child: "career", value: "Mechanical Engineer", position: 1});
-   * 
-   * @returns {Object} the document after the given data is appended.
-   */
-
-  /**
    * @param {String} data.id The identifier of the document to modify.
    * @param {String} data.key The name of the key to append.
-   * @param {String} [data.child] The child key of the given key.
    * @param {String | Object} data.value The value to assign to the given key.
-   * @param {Number} [data.position] What position should the new key be placed in the Object/Array?
+   * @param {Number} [data.position] Which object in an array is the data appended to? Only used with documents created with `.insertBulk`.
+   * 
+   * @example > db.append({id: "2", key: "food", value: "leaves"});
+   * @example > db.append({id: "5", key: "person", value: "true", position: 0});
+   * 
+   * @returns {Object | Array} object/array containing new data.
    */
 
-  app(data = {id, key, child, value, position: 0}, directory = {dir: this.path}) {
+  append(data = {id, key, value, position: 0}, directory = {dir: this.path}) {
     if(!(data instanceof Object)) return console.error("[.append] : The data provided must be contained within an Object.");
      if(!data.id) return console.error("[.append] : You must provide an identifier to the document you want to modify.");
-      if(data.child && !data.key) return console.error("[.append] : A \"key\" argument must be specified along with the child key specified.");
-       
-  }
-
-  append(data = {id, key: undefined, value, position}, directory = {dir: this.path}) {
-    if(!(data instanceof Object)) return console.log("[.append] : Your 'data' argument must be an Object.");
-    if(!data.id) return console.log("[.append] : You need to provide an identifier in order to locate the document to change.");
-    if(!data.key || !data.value) return console.log("[.append] : You need to provide a 'key' and 'value' in order to append to the given document.");
-      if(fs.existsSync(`${directory.dir}${data.id}.json`) == false) return console.log(`[.append] : Unable to locate the document "${id}.json". It does not exist.`);
-      let file = fs.readFileSync(`${directory.dir}${data.id}.json`);
-      let appended = false;
-      file = JSON.parse(file);
-      if(file instanceof Object) {// .insert() file
-        file = file[0]
-        console.log(1);
-        if(!file[data.key]) {
-          console.log(3);
-          file[data.key] = data.value;
-          appended = true;
-        } else if(file[data.key] && file[data.key] instanceof Array) { // The key being appended exists & is an array
-          (file[data.key]).push(data.value);
-          appended = true;
-          console.log(2);
-        }
-        console.log(file);
-        file = [file];
-        file = JSON.stringify(file, null, 3);
-        fs.writeFileSync(`${directory.dir}${data.id}.json`, file);
-          this.feedback == true ? console.log(appended ? "[.append] : Successfully appended data to 1 document." : "[.append] : Couldn't append data to 1 document.") : "";
-          this.log == true ? Logger(appended ? `[ ${new Date()} - append() ] Successfully appended data to "${data.id}".` : `[ ${new Date()} - append() ] Coudln't append data to "${data.id}".`) : ""
-          return JSON.parse(file);
-      } else if(file instanceof Array) {
-        console.log(1);
-        if((file[data.position || (file.length)-1])[data.key] && (file[data.position || (file.length)-1])[data.key] instanceof Array) {
-          ((file[data.position || (file.length)-1])[data.key]).push(data.value);
-          appended = true;
-        } else {
-          (file[data.position || (file.length)-1])[data.key] = data.value;
-          appended = true;
-        }
-        file = JSON.stringify(file, null, 3);
-        fs.writeFileSync(`${directory.dir}${data.id}.json`, file);
-          this.feedback == true ? console.log(appended ? "[.append] : Successfully appended data to 1 document." : "[.append] : Couldn't append data to 1 document.") : "";
-          this.log == true ? Logger(appended ? `[ ${new Date()} - append() ] Successfully appended data to "${data.id}".` : `[ ${new Date()} - append() ] Coudln't append data to "${data.id}".`) : ""
-          return JSON.parse(file);
-      }
+       if(data.position < 0) return console.error("[.append] : The \"position\" argument cannot be less than 0.");
+    try {
+      if(!(fs.existsSync(`${directory.dir}${data.id}.json`))) return console.error("[.append] : Couldn't find any documents with the given identifier.");
+       let file = fs.readFileSync(`${directory.dir}${data.id}.json`);
+        file = JSON.parse(file);
+         if(file.length == 1) { // Document created using .insert()
+          file = file[0];
+          file[data.key] = BNS(data.value);
+          file = [file];
+         } else {
+          if(data.position > file.length-1) return console.error("[.append] : Unable to append data to the document. The \"position\" provided is greater than the array's length.");
+           (file[data.position])[data.key] = BNS(data.value)
+         }
+         let obj = JSON.stringify(file, null, 3);
+          fs.writeFileSync(`${directory.dir}${data.id}.json`, obj);
+          this.feedback == true ? console.log("[.append] : Successfully appended data to 1 document.") : "";
+           this.log == true ? Logger(`[ ${new Date()} - append() ] File "${data.id}" was appended to successfully.`) : ""
+            return JSON.parse(obj);
+    } catch(err) {
+      if(this.kill == true) {
+        throw new Error(err);
+       } else {
+        console.log(`Error: ${err.message}`);
+       }
+       this.log == true ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "append()"!\n${err.message}`) : ""
+    }
   }
 
     /**
