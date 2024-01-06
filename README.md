@@ -29,6 +29,7 @@ const db = new Wasteful();
   - [Replicate Documents](#replicateid-to-from-force "db.replicate()")
   - [Overwrite Documents](#setid-data-dir "db.set()")
   - [Undo Updates](#undo "db.undo")
+- [Update Notes](#update-notes)
 
 
 
@@ -91,16 +92,15 @@ db.get({id: "4321", dir: `${__dirname}/data/`}, async(res) => { console.log(awai
 
 
 ## .append()
-<b>Append a new key and value or append a new child-key and value to an existing key within a document.</b>
+<b>Append a new key and value to a document's data. If the document's data is an array of objects, provide a 'position' argument to pick which object to append to.</b>
 ```js
-db.append({id: "7", key: "bill", child: "career", value: "Mechanical Engineer", position: 1});
-db.append({id: "5678", key: "real", value: "true"}, {dir: `${__dirname}/data/`});
+db.append({id: "2", key: "food", value: "leaves"});
+db.append({id: "5", key: "person", value: "true", position: 0});
 ```
-* id - The identifier of the file to update
-* key - The name of the key that will be appended OR the preexisting key to append a child-key to.
-* child - The name of the child-key to append to the aforementioned key.
-* value - The content of the given key or child-key.
-* position - Which object within an array to append to. This is only needed if the document was created using `.insertBulk()`. Defaults to the first object in the array.
+* id - The identifier of the file to append to.
+* key - The name of the new key to append to an object.
+* value - The content of the given key.
+* position - Which object in an array of objects should the new key be appended to? (Defaults to the first object.)
 
 
 ## .update()
@@ -174,4 +174,15 @@ db.undo();
 ```
 
 
-<div style="text-align: right"> v1.5.8 </div>
+# <ins>Update Notes</ins>
+- Rewritten .insert()
+- Rewritten .insertBulk()
+  - Fixed serialization not working because of the missing process
+  - Changed how assigning "id" variables works with serialization. If an "id" key exists, it will be used rather than creating a new key.
+- Rewritten .append()
+  - This function actually works now!
+- Serialization identifiers are now strings rather than integers.
+- Errors sent to the logging file, when log is enabled, will now include the specific error message.
+- There is now a new line between each error logged in the logging file.
+
+<div style="text-align: right"> v1.5.9 </div>
