@@ -41,15 +41,13 @@ class WastefulDB {
      * @param {Boolean} options.log Writes to the file "logger.txt" when a function is executed or an error occurs. Includes a timestamp, name of function, and what occurred. (default: `false`)
      * @param {String} options.path Provide a custom directory to route each JSON file. Ignoring this will default read/write to "`./wastefuldb/data/`"
      * @param {Boolean} options.serial When **true**, you are no longer required to include an id variable to your file data. Instead, the identifier is based on the **directory size** at the time. (default: `false`)
-     * @param {Array} options.standard standard[0], when **true**, will default to the given Object in stanard[1] and automatically create a document which doesn't exist when using functions such as `.find()`. Only works when `serial` is **true**. (default: `false`)
      * @param {Boolean} options.kill When an error occurs and the option is set to **true**, automatically kills the process to prevent further errors. (default: `false`)
      */
-    constructor(options = {feedback, log, path, serial, standard, kill}) {
+    constructor(options = {feedback, log, path, serial, kill}) {
         this.feedback = options.feedback || false
         this.log = options.log || false
         this.path = options.path || `${__dirname}/data/`;
         this.serial = options.serial || false
-        this.standard = options.standard || [false]; (this.standard == true && this.serial == false) ? console.log("Option 'standard' cannot be true while 'serial' is false.") : ""
         this.kill = options.kill || false
         this.path = (this.path).charAt((this.path).length-1) == "/" ? this.path : this.path + "/";
     }
@@ -126,9 +124,42 @@ class WastefulDB {
      }
 
     /**
-     * Retrieves and parses the data within the specified file.
-     * @param {Object | String} data The identifier of a file.
-     * @param {String} [directory.dir] Specific directory to search for files in. 
+     * Retrieves and parses multiple documents and returns them in an array. If a document isn't found, `-1` will take its place.
+     * @param {Array} data An array of identifiers to search for.
+     * @param {String} [directory.dir] The directory to search for the specified documents in.
+     * 
+     * @example > db.findMore(["1234", "2", "5678"], {dir: `${__dirname}/data/`});
+     * 
+     * @returns {Array} array of objects parsed from each document found.
+     */
+    
+    findMore(data, directory = {dir: this.path}) {
+      if(!data || !(data instanceof Array) || data.length == 0) return console.error("[.findMore] : You must provide multiple identifiers within an array.");
+       if(data.length == 1) return this.find(data[0], {dir: directory.dir}); // Didn't expect this to work at first!
+      try {
+        let arr = [], obj;
+         data.forEach((id) => {
+          if(!(fs.existsSync(`${directory.dir}${id}.json`))) return arr.push(-1); // Push -1 if the document is missing
+           obj = JSON.parse(fs.readFileSync(`${directory.dir}${id}.json`)); // Parse the document
+            arr.push(obj); // Push the object or array
+         });
+         this.feedback == true ? console.log(`[.find] : Successfully returned the data for ${data.length} documents.`) : "";
+          this.log == true ? Logger(`[ ${new Date()} - findMore() ] Execution was successful. Attempted to find files ${data} and returned what was found.`) : ""
+           return arr;
+      } catch(err) {
+        if(this.kill == true) {
+          throw new Error(err.message);
+        } else {
+          console.error("Error: " + err.message);
+        }
+        this.log == true ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "findMore()"!\n${err.message}`) : ""
+      }
+    }
+
+    /**
+     * Retrieves and parses the data within the specified file and returns the object or array.
+     * @param {Object | String} data The identifier of a document.
+     * @param {String} [directory.dir] Specific directory to search for documents in. 
      * 
      * @example > db.find({id: "1234"}, {dir: `${__dirname}/data/`});
      * 
@@ -155,7 +186,7 @@ class WastefulDB {
         if(this.kill == true) {
           throw new Error(err.message);
         } else {
-          console.log("Error: " + err.message);
+          console.error("Error: " + err.message);
         }
         this.log == true ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "find()"!\n${err.message}`) : ""
       }
