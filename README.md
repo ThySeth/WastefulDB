@@ -19,12 +19,12 @@ const db = new Wasteful();
   - [Insert Documents](#insert "db.insert()")
   - [Insert Bulk Documents](#insertbulk "db.insertBulk()")
   - [Find Documents](#find "db.find()")
+  - [Find More Documents](#findmoredata)
   - ["Get" Documents](#get "db.get()")
   - [Append Data](#append)
   - [Update a Document](#update "db.update()")
     - [Update a Nested Object](#update-with-child-value)
   - [Update Multiple Objects](#mupdateid-array-of-objects "db.mupdate()")
-  - [Update via Key Content (Deprecated/Removed)](https://github.com/ThySeth/WastefulDB/commit/be7b497ecaa72b66e98a6155ff97e0bafea87625)
   - [Collect Documents](#collectid-key-value "db.collect()")
   - [Replicate Documents](#replicateid-to-from-force "db.replicate()")
   - [Overwrite Documents](#setid-data-dir "db.set()")
@@ -187,6 +187,11 @@ db.undo();
   - Providing a single identifier will redirect the input to .find() instead of returning an error!
 - Removed `standard` option in the constructor.
   - Seems redundant and overcomplicated compared to just making a custom function in your own program
-- .find() will be rewritten in the next commit to the indev branch. The I/O will not change!
+- Rewritten `.find()`
+  - The identifier is accepted in string, number, and object form. This wasn't documented previously.
+  - Error messages are more descriptive than before.
+  - Feedback provides the identifier that was given.
+- Removed a lot of redundant code related to the boolean-ternary statements
+
 
 <div style="text-align: right"> v1.6.0 </div>
