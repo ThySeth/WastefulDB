@@ -90,13 +90,16 @@ db.findMore(["1234", "2", "5678"], {dir: `${__dirname}/data/`});
 * data - An array of document identifiers to search for.
 
 
-## .get(id)
+## .get(id, dir?, (callback))
 <b>Unlike `db.find`, this function will open each JSON document in the given directory in order to locate the identifier within the document rather than locating the document name.</b>
 ```js
-db.get({id: "4321", dir: `${__dirname}/data/`}, async(res) => { console.log(await res) });
+db.get("1234", {dir: "./data/"}, (result) => { console.log(result); });
+
+db.get({id: 5}, (result) => { console.log(result); });
 ```
 * id - The internal identifier of a file.
-* dir - A specific directory to search in. (optional)
+* dir? - A specific directory to search in.
+* (callback) - The callback argument which will return the data contained within the given document, or returns `-1` if the document isn't found.
 
 
 ## .append({id, key, value, position?})
@@ -191,6 +194,8 @@ db.undo();
   - The identifier is accepted in string, number, and object form. This wasn't documented previously.
   - Error messages are more descriptive than before.
   - Feedback provides the identifier that was given.
+- Rewritten `.get()`
+  - The {dir} parameter is now it's own standalone parameter, no longer attached to the same object as the identifier parameter. {dir} is still optional and will default to `this.path`.
 - Removed a lot of redundant code related to the boolean-ternary statements
 
 
