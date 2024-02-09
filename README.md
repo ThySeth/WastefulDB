@@ -19,12 +19,12 @@ const db = new Wasteful();
   - [Insert Documents](#insert "db.insert()")
   - [Insert Bulk Documents](#insertbulk "db.insertBulk()")
   - [Find Documents](#find "db.find()")
-  - ["Get" Documents](#get "db.get()")
+  - [Find More Documents](#findmoredata)
+  - ["Get" Documents](#getid-dir-callback "db.get()")
   - [Append Data](#append)
   - [Update a Document](#update "db.update()")
     - [Update a Nested Object](#update-with-child-value)
   - [Update Multiple Objects](#mupdateid-array-of-objects "db.mupdate()")
-  - [Update via Key Content (Deprecated/Removed)](https://github.com/ThySeth/WastefulDB/commit/be7b497ecaa72b66e98a6155ff97e0bafea87625)
   - [Collect Documents](#collectid-key-value "db.collect()")
   - [Replicate Documents](#replicateid-to-from-force "db.replicate()")
   - [Overwrite Documents](#setid-data-dir "db.set()")
@@ -66,14 +66,14 @@ db.insert({id: "1234", name: "seth", pass: "xyz"});
 * id - The name of the file and what will be used in the .find() function
 
 
-## .insertBulk()
+## .insertBulk([Array of Objects])
 <b>Insert a file with multiple Objects within an Array.</b>
 ```js
 db.insertBulk( [{id: "5545"}, {first: "Sully", last: "V."}, {password: "password"}] );
 ```
 
 
-## .find()
+## .find(id)
 <b>Provides the information of the specified file with the matching identifier.</b>
 ```js
 let info = db.find({id: "1234"});
@@ -82,16 +82,27 @@ console.log(info);
 * id - The identifier of the file to find and display the information of.
 
 
-## .get()
+## .findMore([data])
+<b>Retrieves and parses multiple documents and returns them in an array. If a document isn't found, `-1` will take its place.</b>
+```js
+db.findMore(["1234", "2", "5678"], {dir: `${__dirname}/data/`});
+```
+* data - An array of document identifiers to search for.
+
+
+## .get(id, dir?, (callback))
 <b>Unlike `db.find`, this function will open each JSON document in the given directory in order to locate the identifier within the document rather than locating the document name.</b>
 ```js
-db.get({id: "4321", dir: `${__dirname}/data/`}, async(res) => { console.log(await res) });
+db.get("1234", {dir: "./data/"}, (result) => { console.log(result); });
+
+db.get({id: 5}, (result) => { console.log(result); });
 ```
 * id - The internal identifier of a file.
-* dir - A specific directory to search in. (optional)
+* dir? - A specific directory to search in.
+* (callback) - The callback argument which will return the data contained within the given document, or returns `-1` if the document isn't found.
 
 
-## .append()
+## .append({id, key, value, position?})
 <b>Append a new key and value to a document's data. If the document's data is an array of objects, provide a 'position' argument to pick which object to append to.</b>
 ```js
 db.append({id: "2", key: "food", value: "leaves"});
@@ -103,7 +114,7 @@ db.append({id: "5", key: "person", value: "true", position: 0});
 * position - Which object in an array of objects should the new key be appended to? (Defaults to the first object.)
 
 
-## .update()
+## .update({id, key, change, math?})
 <b>Searches the given or specified directory for the given ID and updates the given "key" with your "change". Set math to true for __simple__ math. Set the change to "undefined" to delete the specified key. A key which doesn't exist will be added automatically. Not recommended when serialization is enabled.</b>
 ```js
 db.update({id: "1234", key: "id", change: "4321", math: false});
@@ -113,7 +124,6 @@ db.update({id: "1234", key: "id", change: "4321", math: false});
 * change - What change you want to make to it
 * math? - Does the change require (simple) math?
 
-___
 
 ## .update() (with child value)
 <b>Similar to the standard function, declaring a "child" key will update an object within another object aka nested objects. Everything else is the same.</b>
@@ -175,14 +185,18 @@ db.undo();
 
 
 # <ins>Update Notes</ins>
-- Rewritten .insert()
-- Rewritten .insertBulk()
-  - Fixed serialization not working because of the missing process
-  - Changed how assigning "id" variables works with serialization. If an "id" key exists, it will be used rather than creating a new key.
-- Rewritten .append()
-  - This function actually works now!
-- Serialization identifiers are now strings rather than integers.
-- Errors sent to the logging file, when log is enabled, will now include the specific error message.
-- There is now a new line between each error logged in the logging file.
+- Added `.findMore()` 
+  - Find multiple documents at the same time rather than all documents in a directory like .collect()
+  - Providing a single identifier will redirect the input to .find() instead of returning an error!
+- Removed `standard` option in the constructor.
+  - Seems redundant and overcomplicated compared to just making a custom function in your own program
+- Rewritten `.find()`
+  - The identifier is accepted in string, number, and object form. This wasn't documented previously.
+  - Error messages are more descriptive than before.
+  - Feedback provides the identifier that was given.
+- Rewritten `.get()`
+  - The {dir} parameter is now it's own standalone parameter, no longer attached to the same object as the identifier parameter. {dir} is still optional and will default to `this.path`.
+- Removed a lot of redundant code related to the boolean-ternary statements
 
-<div style="text-align: right"> v1.5.9 </div>
+
+<div style="text-align: right"> v1.6.0 </div>
