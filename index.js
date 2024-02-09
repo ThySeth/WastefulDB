@@ -168,6 +168,7 @@ class WastefulDB {
       try {
         let arr = [], obj;
          data.forEach((id) => {
+         id = id.toString();
           if(!(fs.existsSync(`${directory.dir}${id}.json`))) return arr.push(-1); // Push -1 if the document is missing
            obj = JSON.parse(fs.readFileSync(`${directory.dir}${id}.json`)); // Parse the document
             arr.push(obj); // Push the object or array
@@ -483,77 +484,52 @@ class WastefulDB {
     }
 
     /**
-     * Search the given directory for a specified identifier regardless of file name.
-     * @async
-     * @param {String} data Identifier to scan for in each file.
-     * @param {String} [data.dir] Specific directory to search for a file.
+     * @param {String | Number | Object} data The identifier inside of a document to search for.
+     * @param {Object | Function} [directory.dir] The directory to search through.
+     * @param {Function} callback The callback to return the search results to.
      * 
-     * @example > db.get({id: "1234", dir: `${__dirname}/data/`}, (result) => { console.log(result); });
+     * @example > db.get("5", {dir: "./data/"}, (result) => { console.log(result); });
+     * @example > db.get({id: "1234"}, (result) => { console.log(result); });
      * 
-     * @returns {Object} document object in a callback function.
+     * @returns {Object | Array} the data within the document located. Returns `-1` if the document isn't found.
      */
 
-     get(data = {id, dir}, callback) {
-      data.dir == undefined ? data.dir = this.path : data.dir;
-        try {
-        let end = false;
-        if(!(data instanceof Object)) return console.error("[.get] : Unable to perform 'get' function due to 'data' variable not containing Object with query.");
-                let files = fs.readdirSync(`${data.dir}`)
-                 files.forEach(file => {
-                    if(end == true) return;
-                     let info = fs.readFileSync(`${data.dir}${file}`)
-                          let obj = JSON.parse(info); 
-                       if(obj.length > 1) {
-                        console.log(1) 
-                        let find = obj.filter(i => i["id"]);
-                         if(find) {
-                             if(find[0].id == (data.id || data).toString()) {
-                                 this.feedback == true ? console.log("[.get] : Successfully retrieved 1 document.") : "";
-                                 this.log == true ? Logger(`[ ${new Date()} - get() ] File "${data.id}" was successfully retrieved.`) : ""
-                                  end = true;
-                                   return callback(obj);
-                             }
-                         }
-                       } else {
-                        console.log(2);
-                          obj = obj[0];
-                          let dataAtt = Object.entries(data); dataAtt = dataAtt[0];
-                           if(!obj) return console.error("[.get] : File abnormality occurred whilst attempting to read.\nFile name: " + file);
-                        if(!data.id) {
-                            Object.entries(obj).forEach((item) => {
-                                if(item[0] == dataAtt[0] && item[1] == dataAtt[1]) {
-                                    this.feedback == true ? console.log("[.get] : Successfully retrieved 1 document.") : "";
-                                    this.log == true ? Logger(`[ ${new Date()} - get() ] File "${data.id}" was successfully retrieved.`) : ""
-                                    end = true;
-                                     return callback(obj);
-                                } else {
-                                    return;
-                                }
-                            })
-                        } else{
-                         data.id = (data.id).toString();
-                            if(obj.id == data.id) {
-                                this.feedback == true ? console.log("[.get] : Successfully retrieved 1 document.") : "";
-                                this.log == true ? Logger(`[ ${new Date()} - get() ] File "${data.id}" was successfully retrieved.`) : ""
-                                end = true;
-                                 return callback(obj);
-                            } else {
-                                return;
-                            }
-                        }
-                    }
-                 })
-                 if(end == false) {
-                     this.feedback == true ? console.log("[.get] : Unable to retrieve any documents pertaining to the given query.") : "";
-                 }
-        }catch(err){
-            if(this.kill) {
-                throw new Error(err.message);
+    get(data, directory = {dir: this.path}, callback) {
+      if(!data && !(data instanceof String) && !(data instanceof Number) && !(data instanceof Object)) return console.error("[.get] : You must provide a document identifier in the form of a string, number, or object with the key 'id'.");
+      let result, path = this.path;
+      if(typeof directory === "function") {
+        result = funcNoDir((data.id || data).toString())
+        return directory(result)
+      } else if(typeof directory === "object" && typeof callback === "function") {
+        result = funcNoDir((data.id || data).toString(), {dir: directory.dir});
+        return callback(result);
+      }
+      function funcNoDir(data, directory = {dir: path}) {
+        let _directory = (fs.readdirSync(`${directory.dir}`)), file, found = false;
+        for(let i = 0; i < (_directory).length-1; i++) {
+          if(found) break;
+          file = fs.readFileSync(`${directory.dir}${_directory[i]}`);
+           file = JSON.parse(file);
+            if(file.length > 1) { // If the file is an array of objects
+              for(let h = 0; h < file.length; h++) {
+                if(file[h].hasOwnProperty("id") && file[h].id == data) {
+                  found = true;
+                }
+              }
             } else {
-            console.log("Error: " + err.message);
+              file = file[0];
+               if(file.id && file.id == data) {
+                  found = true;
+               }
             }
-            this.log ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "get()"!\n${err.message}`) : ""
         }
+        if(found) {
+          return file;
+        } else {
+          return -1;
+        }
+      }
+
     }
 
     /**
