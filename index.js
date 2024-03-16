@@ -1,5 +1,6 @@
 const fs = require('fs');
 const { objectMath } = require('./functions/updateMath.js');
+const {kill} = require("./functions/errorHandler.js");
 
 let cache = [];
 
@@ -73,11 +74,7 @@ class WastefulDB {
            this.log ? Logger(`[ ${new Date()} - insert() ] File "${data.id}" was successfully created.`) : ""
             return JSON.parse(obj); // Parse the json-ified data, keeping the new format
       } catch(err) {
-        if(this.kill) {
-          throw new Error(err.message);
-        } else {
-          console.log("Error: " + err.message);
-        }
+        kill(this.kill, err.message, ".insert()")
         this.log ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "insert()"!\n${err.message}`) : ""
       }
      }
@@ -114,11 +111,7 @@ class WastefulDB {
           this.log ? Logger(`[ ${new Date()} - insertBulk() ] File "${id.id}" was successfully created.`) : ""
            return JSON.parse(obj);
       } catch(err) {
-        if(this.kill) {
-          throw new Error(err.message);
-        } else {
-          console.log("Error: " + err.message);
-        }
+        kill(this.kill, err.message, ".insertBulk()")
         this.log ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "insertBulk()"!\n${err.message}`) : ""
       }
      }
@@ -143,11 +136,7 @@ class WastefulDB {
           this.log ? Logger(`[ ${new Date()} - find() ] File "${data.id || data}" was successfully found.`) : ""
            return file;
        } catch(err) {
-        if(this.kill) {
-          throw new Error(err);
-        } else {
-          console.error("Error: " + err.message);
-        }
+        kill(this.kill, err.message, ".find()")
         this.log ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "find()"!\n${err.message}`) : ""
        }
      }
@@ -177,11 +166,7 @@ class WastefulDB {
           this.log ? Logger(`[ ${new Date()} - findMore() ] Execution was successful. Attempted to find files ${data} and returned what was found.`) : ""
            return arr;
       } catch(err) {
-        if(this.kill) {
-          throw new Error(err.message);
-        } else {
-          console.error("Error: " + err.message);
-        }
+        kill(this.kill, err.message, ".findMore()")
         this.log ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "findMore()"!\n${err.message}`) : ""
       }
     }
@@ -277,11 +262,7 @@ class WastefulDB {
         this.log ? Logger(`[ ${new Date()} - update() ] File "${data.id}" was successfully updated.`) : "";
         return JSON.parse(file);
       } catch(err) {
-        if(this.kill) {
-          throw new Error(err.message);
-        } else {
-          console.error("An error occurred: " + err.message);
-        }
+        kill(this.kill, err.message, ".update()")
       this.log ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing .update!\n${err.message}`) : ""
       }
     }
@@ -394,11 +375,7 @@ class WastefulDB {
                    return JSON.parse(bar);
             }
      } catch(err) {
-        if(this.kill) {
-            throw new Error(err.message);
-        } else {
-            console.error("Error: " + err.message);
-        }
+        kill(this.kill, err.message, ".mupdate()")
         this.log ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "mupdate()"!\n${err.message}`) : ""
      }
   }
@@ -437,11 +414,7 @@ class WastefulDB {
            this.log ? Logger(`[ ${new Date()} - append() ] File "${data.id}" was appended to successfully.`) : ""
             return JSON.parse(obj);
     } catch(err) {
-      if(this.kill) {
-        throw new Error(err);
-       } else {
-        console.log(`Error: ${err.message}`);
-       }
+       kill(this.kill, err.message, ".append()")
        this.log ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "append()"!\n${err.message}`) : ""
     }
   }
@@ -474,11 +447,7 @@ class WastefulDB {
         obj = obj.length == 0 ? -1 : obj;
          return obj;
      } catch(err) {
-       if(this.kill) {
-        throw new Error(err);
-       } else {
-        console.log(`Error: ${err.message}`);
-       }
+       kill(this.kill, err.message, ".collect()")
        this.log ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "collect()"!\n${err.message}`) : ""
      }
     }
@@ -495,6 +464,7 @@ class WastefulDB {
      */
 
     get(data, directory = {dir: this.path}, callback) {
+     try {
       if(!data && !(data instanceof String) && !(data instanceof Number) && !(data instanceof Object)) return console.error("[.get] : You must provide a document identifier in the form of a string, number, or object with the key 'id'.");
       let result, path = this.path;
       if(typeof directory === "function") {
@@ -524,12 +494,19 @@ class WastefulDB {
             }
         }
         if(found) {
+          this.feedback ? console.log(`[.get] : Successfully retrieved the document containing the identifier "${data.id || data}".`) : "";
+          this.log == true ? Logger(`[ ${new Date()} - get() ] Successfully found the document which contains the identifier "${data.id || data}"`) : ""
           return file;
         } else {
+          this.feedback ? console.log(`[.get] : Unable to locate any documents containing the identifier "${data.id || data}".`) : "";
+          this.log == true ? Logger(`[ ${new Date()} - get() ] Unable to locate any documents containing the identifier "${data.id || data}". It doesn't exist.`) : ""
           return -1;
         }
       }
-
+     } catch(err) {
+      kill(this.kill, err.message, ".get()")
+      this.log ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "get()"!\n${err.message}`) : ""
+     }
     }
 
     /**
@@ -547,9 +524,9 @@ class WastefulDB {
       try {
         return fs.existsSync(`${directory.dir}${(data.id || data).toString()}.json`);
       } catch(err) {
-        console.log("Error: " + err.message);
+        kill(this.kill, err.message, ".check()");
+        this.log ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "check()"!\n${err.message}`) : ""
       }
-      this.log ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "check()"!\n${err.message}`) : ""
     }
 
     /**
@@ -566,11 +543,7 @@ class WastefulDB {
             let files = fs.readdirSync(`${directory.dir}`);
              return files.length;
         }catch(err) {
-         if(this.kill) {
-            throw new Error(err.message);
-         } else {
-            console.log("Error: " + err.message);
-         }
+         kill(this.kill, err.message, ".size()");
          this.log ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "size()"!\n${err.message}`) : ""
         }
     }
@@ -589,11 +562,7 @@ class WastefulDB {
              this.feedback ? console.log("[.delete] : Successfully deleted 1 document.") : "";
              this.log ? Logger(`[ ${new Date()} - delete() ] File "${data.id}" was successfully deleted.`) : ""
         } catch(err) {
-          if(this.kill) {
-            throw new Error(err.message);
-          } else {
-            console.log("Error: " + err.message);
-          }
+          kill(this.kill, err.message, ".delete()");
           this.log ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "delete()"!\n${err.message}`) : ""
         }
     }
@@ -629,11 +598,7 @@ class WastefulDB {
          this.log ? Logger(`[ ${new Date()} - replicate() ] File "${id}" was successfully replicated.`) : ""
       }
      } catch(err) {
-       if(this.kill) {
-         throw new Error(err.message);
-       } else {
-         console.log("Error: " + err.message);
-       }
+       kill(this.kill, err.message, ".replicate()");
        this.log ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "replicate()"!\n${err.message}`) : ""
      }
     }
@@ -663,11 +628,7 @@ class WastefulDB {
           this.log ? Logger(`[ ${new Date()} - set() ] File "${id}" was successfully overwritten.`) : ""
           return JSON.parse(data);
        }catch(err){
-         if(this.kill) {
-           throw new Error(err.message);
-         } else {
-           console.log("Error: " + err.message);
-         }
+         kill(this.kill, err.message, ".set()");
          this.log ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "set()"!\n${err.message}`) : ""
        }
     }
@@ -687,11 +648,7 @@ class WastefulDB {
          fs.writeFileSync(`${dir}${cache[0].id}.json`, data);
           this.feedback ? console.log(`[.undo] : Successfully undone 1 change to document ${dir}${cache[0].id}.json`) : "";
       }catch(err) {
-        if(this.kill) {
-          throw new Error(err.message);
-        } else {
-          console.log("Error: " + err.message);
-        }
+        kill(this.kill, err.message, ".undo()");
         this.log ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "undo()"!\n${err.message}`) : ""
       }
     }
