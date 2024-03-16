@@ -18,9 +18,9 @@ const db = new Wasteful();
 - [Functions](#functions)
   - [Insert Documents](#insert "db.insert()")
   - [Insert Bulk Documents](#insertbulk "db.insertBulk()")
-  - [Find Documents](#find "db.find()")
+  - [Find Documents](#findid "db.find()")
   - [Find More Documents](#findmoredata)
-  - ["Get" Documents](#get "db.get()")
+  - ["Get" Documents](#getid-dir-callback "db.get()")
   - [Append Data](#append)
   - [Update a Document](#update "db.update()")
     - [Update a Nested Object](#update-with-child-value)
@@ -36,12 +36,11 @@ const db = new Wasteful();
 
 # <ins>Constructor</ins>
 ```js
-new Wasteful({feedback: false, log: false, path: `${__dirname}/info/`, standard: [false], serial: false, kill: false});
+new Wasteful({feedback: false, log: false, path: `${__dirname}/info/`, serial: false, kill: false});
 ```
 * feedback - Sends a confirmation via console when a function is executed successfully. (__default__: `false`)
 * log - Catalogs every time a function is executed or an error occurs, including the timestamp at which the event occurred. (__default__: `false`)
 * path - Provide a custom path where you wish JSON files to be written/read. (__default__: `./wastefuldb/data/`)
-* standard - When __standard[0]__ is true, when a document doesn't exist when using `.find()`, a new document will be created with a default value given in __standard[1]__. _WILL NOT_ work when serial is false. (__default__: `false`)
 * serial - Automatically assigns filenames/identifiers based on the size of the set path/directory. (__default__: `false`)
 * kill - When set to true, the process will be kill when an error occurs in a try/catch statement. (__defualt__: `false`)
 
@@ -126,7 +125,7 @@ db.update({id: "1234", key: "id", change: "4321", math: false});
 
 
 ## .update() (with child value)
-<b>Similar to the standard function, declaring a "child" key will update an object within another object aka nested objects. Everything else is the same.</b>
+<b>Declaring a "child" key will update an object within another object aka nested objects. Everything else is the same.</b>
 ```js
 db.update({id: "5", key: "name", child: "last", change: "A."});
 ```
@@ -185,18 +184,8 @@ db.undo();
 
 
 # <ins>Update Notes</ins>
-- Added `.findMore()` 
-  - Find multiple documents at the same time rather than all documents in a directory like .collect()
-  - Providing a single identifier will redirect the input to .find() instead of returning an error!
-- Removed `standard` option in the constructor.
-  - Seems redundant and overcomplicated compared to just making a custom function in your own program
-- Rewritten `.find()`
-  - The identifier is accepted in string, number, and object form. This wasn't documented previously.
-  - Error messages are more descriptive than before.
-  - Feedback provides the identifier that was given.
-- Rewritten `.get()`
-  - The {dir} parameter is now it's own standalone parameter, no longer attached to the same object as the identifier parameter. {dir} is still optional and will default to `this.path`.
-- Removed a lot of redundant code related to the boolean-ternary statements
+- The error handler for each function has been relocated and converted into its own function.
+  - Reformatted how errors are logged into the console so it's a little more informal.
+- Fixed "standard" still being a part of the README despite being removed.
 
-
-<div style="text-align: right"> v1.6.0 </div>
+<div style="text-align: right"> v1.6.1 </div>
