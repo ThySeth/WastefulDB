@@ -5,7 +5,7 @@ A little custom made, document-oriented database project made with JavaScript an
 ### Quick Setup
 ```js
 const Wasteful = require('wastefuldb');
-const db = new Wasteful();
+const db = new Wasteful({});
 ```
 
 ### Recommendations:
@@ -38,11 +38,12 @@ const db = new Wasteful();
 ```js
 new Wasteful({feedback: false, log: false, path: `${__dirname}/info/`, serial: false, kill: false});
 ```
-* feedback - Sends a confirmation via console when a function is executed successfully. (__default__: `false`)
-* log - Catalogs every time a function is executed or an error occurs, including the timestamp at which the event occurred. (__default__: `false`)
-* path - Provide a custom path where you wish JSON files to be written/read. (__default__: `./wastefuldb/data/`)
-* serial - Automatically assigns filenames/identifiers based on the size of the set path/directory. (__default__: `false`)
-* kill - When set to true, the process will be kill when an error occurs in a try/catch statement. (__defualt__: `false`)
+* **feedback** - Sends a confirmation via console when a function is executed successfully. (__default__: `false`)
+* **log** - Catalogs every time a function is executed or an error occurs, including the timestamp at which the event occurred. (__default__: `false`)
+  - A directory where the log file is stored can be specified by supplying an object with the keys `enable`, a Boolean, and `dir`, a string containing your directory path. (__example__: `{enable: true, dir: "./data/"}`)
+* **path** - Provide a custom path where you wish JSON files to be written/read. (__default__: `./wastefuldb/data/`)
+* **serial** - Automatically assigns filenames/identifiers based on the size of the set path/directory. (__default__: `false`)
+* **kill** - When set to true, the process will be kill when an error occurs in a try/catch statement. (__defualt__: `false`)
 
 
 # <ins>Specifying Directories</ins>
@@ -184,8 +185,7 @@ db.undo();
 
 
 # <ins>Update Notes</ins>
-- The error handler for each function has been relocated and converted into its own function.
-  - Reformatted how errors are logged into the console so it's a little more informal.
-- Fixed "standard" still being a part of the README despite being removed.
+- When initializing the WastefulDB constructor, it freaks out when no arguments are supplied. To solve this, put curly brackets without any arguments as a temporary solution.
+- The {log} option now allows for directory specification similar to every function. Declare {log} as an object with {enable: Boolean, dir: "path"}
 
-<div style="text-align: right"> v1.6.1 </div>
+<div style="text-align: right"> v1.6.3 </div>
