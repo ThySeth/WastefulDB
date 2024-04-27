@@ -43,7 +43,7 @@ class WastefulDB {
      * @param {Boolean} options.serial When **true**, you are no longer required to include an id variable to your file data. Instead, the identifier is based on the **directory size** at the time. (default: `false`)
      * @param {Boolean} options.kill When an error occurs and the option is set to **true**, automatically kills the process to prevent further errors. (default: `false`)
      */
-    constructor(options = {feedback, log, path, serial, kill}) {
+    constructor(options = {feedback: false, log: false, path: `${__dirname}/data/`, serial: false, kill: false}) {
         this.feedback = options.feedback || false
         this.log = options.log || false
         this.path = options.path || `${__dirname}/data/`;
