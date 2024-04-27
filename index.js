@@ -4,18 +4,17 @@ const {kill} = require("./functions/errorHandler.js");
 
 let cache = [];
 
-function Logger(data) {
+function Logger(data, directory = __dirname) {
   try {
-    let text, file = fs.existsSync(`${__dirname}/logger.txt/`);
-     if(file){
-      file = fs.readFileSync(`${__dirname}/logger.txt/`);
-      text = `${data}\n \n${file}`
-      fs.writeFileSync(`${__dirname}/logger.txt/`, text);
-     } else {
-      fs.writeFileSync(`${__dirname}/logger.txt/`, data)
-     }
-  }catch(err){
-    console.log(`An error occurred while logging a process.\n${err}`);
+    if(fs.existsSync(`${directory}/logger.txt`)) { // Logger exists
+      let fileData = fs.readFileSync(`${directory}/logger.txt`);
+      data = `${data}\n \n${fileData}`
+      fs.writeFileSync(`${directory}/logger.txt`, data);
+    } else { // Logger doesn't exist
+      fs.writeFileSync(`${directory}/logger.txt`, data);
+    }
+  }catch(err) {
+    console.error(`An error occurred while logging a process.\n${err}`);
   }
 }
 
@@ -44,7 +43,7 @@ class WastefulDB {
      * @param {Boolean} options.serial When **true**, you are no longer required to include an id variable to your file data. Instead, the identifier is based on the **directory size** at the time. (default: `false`)
      * @param {Boolean} options.kill When an error occurs and the option is set to **true**, automatically kills the process to prevent further errors. (default: `false`)
      */
-    constructor(options = {feedback, log, path, serial, kill}) {
+    constructor(options = {feedback: false, log: false, path: `${__dirname}/data/`, serial: false, kill: false}) {
         this.feedback = options.feedback || false
         this.log = options.log || false
         this.path = options.path || `${__dirname}/data/`;
@@ -71,11 +70,11 @@ class WastefulDB {
          let obj = JSON.stringify([data], null, 3); // Format data for writing
           fs.writeFileSync(`${directory.dir}${data.id}.json`, obj);
            this.feedback ? console.log("[.insert] : Successfully created 1 document.") : "";
-           this.log ? Logger(`[ ${new Date()} - insert() ] File "${data.id}" was successfully created.`) : ""
+           (((this.log) instanceof Object && this.log.enable == true) || this.log == true) ? Logger(`[ ${new Date()} - insert() ] File "${data.id}" was successfully created.`, (this.log).dir) : ""
             return JSON.parse(obj); // Parse the json-ified data, keeping the new format
       } catch(err) {
         kill(this.kill, err.message, ".insert()")
-        this.log ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "insert()"!\n${err.message}`) : ""
+        (((this.log) instanceof Object && this.log.enable == true) || this.log == true) ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "insert()"!\n${err.message}`, (this.log).dir) : ""
       }
      }
     
@@ -108,11 +107,11 @@ class WastefulDB {
         let id = data.find((value) => (Object.keys(value)).includes("id")).id, obj = JSON.stringify(data, null, 3);
          fs.writeFileSync(`${directory.dir}${id}.json`, obj);
           this.feedback ? console.log("[.insertBulk] : Successfully created 1 document.") : "";
-          this.log ? Logger(`[ ${new Date()} - insertBulk() ] File "${id.id}" was successfully created.`) : ""
+          (((this.log) instanceof Object && this.log.enable == true) || this.log == true) ? Logger(`[ ${new Date()} - insertBulk() ] File "${id.id}" was successfully created.`, this.log.dir) : ""
            return JSON.parse(obj);
       } catch(err) {
         kill(this.kill, err.message, ".insertBulk()")
-        this.log ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "insertBulk()"!\n${err.message}`) : ""
+        (((this.log) instanceof Object && this.log.enable == true) || this.log == true) ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "insertBulk()"!\n${err.message}`, this.log.dir) : ""
       }
      }
 
@@ -133,11 +132,11 @@ class WastefulDB {
          let file = fs.readFileSync(`${directory.dir}${(data.id || data).toString()}.json`);
          file = JSON.parse(file); file = file.length > 1 ? file : file[0]; // Parse document. If the array size is greater than one (insertbulk), remain an array, otherwise turn into a standalone object (.insert)
           this.feedback ? console.log(`[.find] : Successfully found document "${data.id || data}".`) : "";
-          this.log ? Logger(`[ ${new Date()} - find() ] File "${data.id || data}" was successfully found.`) : ""
+          (((this.log) instanceof Object && this.log.enable == true) || this.log == true) ? Logger(`[ ${new Date()} - find() ] File "${data.id || data}" was successfully found.`, this.log.dir) : ""
            return file;
        } catch(err) {
-        kill(this.kill, err.message, ".find()")
-        this.log ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "find()"!\n${err.message}`) : ""
+        kill(this.kill, err.message, ".find()");
+        (((this.log) instanceof Object && this.log.enable == true) || this.log == true) ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "find()"!\n${err.message}`, this.log.dir) : ""
        }
      }
 
@@ -163,11 +162,11 @@ class WastefulDB {
             arr.push(obj); // Push the object or array
          });
          this.feedback ? console.log(`[.find] : Successfully returned the data for ${data.length} documents.`) : "";
-          this.log ? Logger(`[ ${new Date()} - findMore() ] Execution was successful. Attempted to find files ${data} and returned what was found.`) : ""
+         (((this.log) instanceof Object && this.log.enable == true) || this.log == true) ? Logger(`[ ${new Date()} - findMore() ] Execution was successful. Attempted to find files ${data} and returned what was found.`, this.log.dir) : ""
            return arr;
       } catch(err) {
         kill(this.kill, err.message, ".findMore()")
-        this.log ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "findMore()"!\n${err.message}`) : ""
+        (((this.log) instanceof Object && this.log.enable == true) || this.log == true) ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "findMore()"!\n${err.message}`, this.log.dir) : ""
       }
     }
     
@@ -259,11 +258,11 @@ class WastefulDB {
         fs.writeFileSync(`${directory.dir}${data.id}.json`, file);
 
         this.feedback ? console.log("[.update] Successfully updated 1 document.") : "";
-        this.log ? Logger(`[ ${new Date()} - update() ] File "${data.id}" was successfully updated.`) : "";
+        (((this.log) instanceof Object && this.log.enable == true) || this.log == true) ? Logger(`[ ${new Date()} - update() ] File "${data.id}" was successfully updated.`, this.log.dir) : "";
         return JSON.parse(file);
       } catch(err) {
         kill(this.kill, err.message, ".update()")
-      this.log ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing .update!\n${err.message}`) : ""
+        (((this.log) instanceof Object && this.log.enable == true) || this.log == true) ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing .update!\n${err.message}`, this.log.dir) : ""
       }
     }
 
@@ -329,7 +328,7 @@ class WastefulDB {
                bar = JSON.stringify(obj, null, 3);
                 fs.writeFileSync(`${directory.dir}${id}.json`, bar);
                  this.feedback ? console.log("[.mupdate] : Successfully updated 1 bulk document.") : "";
-                 this.log ? Logger(`[ ${new Date()} - mupdate() ] File "${data.id}" was successfully updated.`) : ""
+                 (((this.log) instanceof Object && this.log.enable == true) || this.log == true) ? Logger(`[ ${new Date()} - mupdate() ] File "${data.id}" was successfully updated.`, this.log.dir) : ""
                  return JSON.parse(bar);
             } else {
                 // BASIC SINGLE OBJECT DOCUMENT <---
@@ -371,12 +370,12 @@ class WastefulDB {
                  bar = JSON.stringify(obj, null, 3);
                   fs.writeFileSync(`${directory.dir}${id}.json`, bar);
                    this.feedback ? console.log("[.mupdate] : Successfully updated 1 document.") : "";
-                   this.log ? Logger(`[ ${new Date()} - mupdate() ] File "${data.id}" was successfully updated.`) : ""
+                   (((this.log) instanceof Object && this.log.enable == true) || this.log == true) ? Logger(`[ ${new Date()} - mupdate() ] File "${data.id}" was successfully updated.`, this.log.dir) : ""
                    return JSON.parse(bar);
             }
      } catch(err) {
         kill(this.kill, err.message, ".mupdate()")
-        this.log ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "mupdate()"!\n${err.message}`) : ""
+        (((this.log) instanceof Object && this.log.enable == true) || this.log == true) ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "mupdate()"!\n${err.message}`, this.log.dir) : ""
      }
   }
 
@@ -411,11 +410,11 @@ class WastefulDB {
          let obj = JSON.stringify(file, null, 3);
           fs.writeFileSync(`${directory.dir}${data.id}.json`, obj);
           this.feedback ? console.log("[.append] : Successfully appended data to 1 document.") : "";
-           this.log ? Logger(`[ ${new Date()} - append() ] File "${data.id}" was appended to successfully.`) : ""
+          (((this.log) instanceof Object && this.log.enable == true) || this.log == true) ? Logger(`[ ${new Date()} - append() ] File "${data.id}" was appended to successfully.`, this.log.dir) : ""
             return JSON.parse(obj);
     } catch(err) {
        kill(this.kill, err.message, ".append()")
-       this.log ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "append()"!\n${err.message}`) : ""
+       (((this.log) instanceof Object && this.log.enable == true) || this.log == true) ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "append()"!\n${err.message}`, this.log.dir) : ""
     }
   }
 
@@ -443,12 +442,12 @@ class WastefulDB {
         file.length > 1 ? obj.push(file) : obj.push(file[0]);
       });
        this.feedback ? console.log("[.collect] : Successfully collected all documents in the directory.") : "";
-       this.log ? Logger(`[ ${new Date()} - collect() ] Successfully collected documents in the directory "${directory.dir}".`) : ""
+       (((this.log) instanceof Object && this.log.enable == true) || this.log == true) ? Logger(`[ ${new Date()} - collect() ] Successfully collected documents in the directory "${directory.dir}".`, this.log.dir) : ""
         obj = obj.length == 0 ? -1 : obj;
          return obj;
      } catch(err) {
        kill(this.kill, err.message, ".collect()")
-       this.log ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "collect()"!\n${err.message}`) : ""
+       (((this.log) instanceof Object && this.log.enable == true) || this.log == true) ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "collect()"!\n${err.message}`, this.log.dir) : ""
      }
     }
 
@@ -495,17 +494,17 @@ class WastefulDB {
         }
         if(found) {
           this.feedback ? console.log(`[.get] : Successfully retrieved the document containing the identifier "${data.id || data}".`) : "";
-          this.log == true ? Logger(`[ ${new Date()} - get() ] Successfully found the document which contains the identifier "${data.id || data}"`) : ""
+          (((this.log) instanceof Object && this.log.enable == true) || this.log == true) ? Logger(`[ ${new Date()} - get() ] Successfully found the document which contains the identifier "${data.id || data}"`, this.log.dir) : ""
           return file;
         } else {
           this.feedback ? console.log(`[.get] : Unable to locate any documents containing the identifier "${data.id || data}".`) : "";
-          this.log == true ? Logger(`[ ${new Date()} - get() ] Unable to locate any documents containing the identifier "${data.id || data}". It doesn't exist.`) : ""
+          (((this.log) instanceof Object && this.log.enable == true) || this.log == true) == true ? Logger(`[ ${new Date()} - get() ] Unable to locate any documents containing the identifier "${data.id || data}". It doesn't exist.`, this.log.dir) : ""
           return -1;
         }
       }
      } catch(err) {
       kill(this.kill, err.message, ".get()")
-      this.log ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "get()"!\n${err.message}`) : ""
+      (((this.log) instanceof Object && this.log.enable == true) || this.log == true) ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "get()"!\n${err.message}`, this.log.dir) : ""
      }
     }
 
@@ -525,7 +524,7 @@ class WastefulDB {
         return fs.existsSync(`${directory.dir}${(data.id || data).toString()}.json`);
       } catch(err) {
         kill(this.kill, err.message, ".check()");
-        this.log ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "check()"!\n${err.message}`) : ""
+        (((this.log) instanceof Object && this.log.enable == true) || this.log == true) ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "check()"!\n${err.message}`, this.log.dir) : ""
       }
     }
 
@@ -544,7 +543,7 @@ class WastefulDB {
              return files.length;
         }catch(err) {
          kill(this.kill, err.message, ".size()");
-         this.log ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "size()"!\n${err.message}`) : ""
+         (((this.log) instanceof Object && this.log.enable == true) || this.log == true) ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "size()"!\n${err.message}`, this.log.dir) : ""
         }
     }
 
@@ -560,10 +559,10 @@ class WastefulDB {
         try {
             fs.rmSync(`${directory.dir}${(data.id || data).toString()}.json`);
              this.feedback ? console.log("[.delete] : Successfully deleted 1 document.") : "";
-             this.log ? Logger(`[ ${new Date()} - delete() ] File "${data.id}" was successfully deleted.`) : ""
+             (((this.log) instanceof Object && this.log.enable == true) || this.log == true) ? Logger(`[ ${new Date()} - delete() ] File "${data.id}" was successfully deleted.`, this.log.dir) : ""
         } catch(err) {
           kill(this.kill, err.message, ".delete()");
-          this.log ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "delete()"!\n${err.message}`) : ""
+          (((this.log) instanceof Object && this.log.enable == true) || this.log == true) ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "delete()"!\n${err.message}`, this.log.dir) : ""
         }
     }
 
@@ -590,16 +589,16 @@ class WastefulDB {
        let _data = fs.readFileSync(`${options.from}/${id}.json`);
         fs.writeFileSync(`${options.to}/${id}_rep.json`, _data);
          this.feedback ? console.log(`[.replicate] : Successfully forced replication of 1 document. ( ${options.from}/${id}.json > ${options.to}/${id}_rep.json )`) : "";
-         this.log ? Logger(`[ ${new Date()} - replicate() ] File "${id}" was force replicated.`) : ""
+         (((this.log) instanceof Object && this.log.enable == true) || this.log == true) ? Logger(`[ ${new Date()} - replicate() ] File "${id}" was force replicated.`, this.log.dir) : ""
       } else {
        let data = fs.readFileSync(`${options.from}/${id}.json`);
         fs.writeFileSync(`${options.to}/${id}.json`, data);
          this.feedback ? console.log(`[.replicate] : Successfully replicated 1 document.`) : "";
-         this.log ? Logger(`[ ${new Date()} - replicate() ] File "${id}" was successfully replicated.`) : ""
+         (((this.log) instanceof Object && this.log.enable == true) || this.log == true) ? Logger(`[ ${new Date()} - replicate() ] File "${id}" was successfully replicated.`, this.log.dir) : ""
       }
      } catch(err) {
        kill(this.kill, err.message, ".replicate()");
-       this.log ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "replicate()"!\n${err.message}`) : ""
+       (((this.log) instanceof Object && this.log.enable == true) || this.log == true) ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "replicate()"!\n${err.message}`, this.log.dir) : ""
      }
     }
 
@@ -625,11 +624,11 @@ class WastefulDB {
         data = JSON.stringify(data, null, 3);
          fs.writeFileSync(`${directory.dir}${id}.json`, data);
           this.feedback ? console.log(`[.set] : Successfully overwritten 1 document.`) : "";
-          this.log ? Logger(`[ ${new Date()} - set() ] File "${id}" was successfully overwritten.`) : ""
+          (((this.log) instanceof Object && this.log.enable == true) || this.log == true) ? Logger(`[ ${new Date()} - set() ] File "${id}" was successfully overwritten.`, this.log.dir) : ""
           return JSON.parse(data);
        }catch(err){
          kill(this.kill, err.message, ".set()");
-         this.log ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "set()"!\n${err.message}`) : ""
+         (((this.log) instanceof Object && this.log.enable == true) || this.log == true) ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "set()"!\n${err.message}`, this.log.dir) : ""
        }
     }
 
@@ -649,7 +648,7 @@ class WastefulDB {
           this.feedback ? console.log(`[.undo] : Successfully undone 1 change to document ${dir}${cache[0].id}.json`) : "";
       }catch(err) {
         kill(this.kill, err.message, ".undo()");
-        this.log ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "undo()"!\n${err.message}`) : ""
+        (((this.log) instanceof Object && this.log.enable == true) || this.log == true) ? Logger(`[ ${new Date()} - ERROR ] An error was encountered while performing "undo()"!\n${err.message}`, this.log.dir) : ""
       }
     }
     
