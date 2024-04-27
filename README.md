@@ -5,7 +5,7 @@ A little custom made, document-oriented database project made with JavaScript an
 ### Quick Setup
 ```js
 const Wasteful = require('wastefuldb');
-const db = new Wasteful({});
+const db = new Wasteful();
 ```
 
 ### Recommendations:
@@ -185,7 +185,7 @@ db.undo();
 
 
 # <ins>Update Notes</ins>
-- When initializing the WastefulDB constructor, it freaks out when no arguments are supplied. To solve this, put curly brackets without any arguments as a temporary solution.
+- Fixed the constructor throwing a reference error when no arguments are specified.
 - The {log} option now allows for directory specification similar to every function. Declare {log} as an object with {enable: Boolean, dir: "path"}
 
-<div style="text-align: right"> v1.6.3 </div>
+<div style="text-align: right"> v1.6.2 </div>
