@@ -9,20 +9,20 @@ const db = new Wasteful();
 ```
 
 ### Recommendations:
-- `NodeJS v18.14.2 or higher`
-- `NPM v9.5.0 or higher`
+- `NodeJS v20.15.1 or higher`
+- `NPM v10.7.0 or higher`
 
 # Table of Content
 - [Constructor](#constructor)
 - [Specifying Directories](#specifying-directories)
 - [Functions](#functions)
   - [Insert Documents](#insert "db.insert()")
-  - [Insert Bulk Documents](#insertbulk "db.insertBulk()")
+  - [Insert Bulk Documents](#insertbulkarray-of-objects "db.insertBulk()")
   - [Find Documents](#findid "db.find()")
   - [Find More Documents](#findmoredata)
   - ["Get" Documents](#getid-dir-callback "db.get()")
-  - [Append Data](#append)
-  - [Update a Document](#update "db.update()")
+  - [Append Data](#appendid-key-value-position)
+  - [Update a Document](#updateid-key-change-math "db.update()")
     - [Update a Nested Object](#update-with-child-value)
   - [Update Multiple Objects](#mupdateid-array-of-objects "db.mupdate()")
   - [Collect Documents](#collectid-key-value "db.collect()")
@@ -185,7 +185,7 @@ db.undo();
 
 
 # <ins>Update Notes</ins>
-- Fixed the constructor throwing a reference error when no arguments are specified.
-- The {log} option now allows for directory specification similar to every function. Declare {log} as an object with {enable: Boolean, dir: "path"}
+- Fixed some of the the items in the table of contents not jumping to the right points
+- Updated the recommended NodeJS and NPM versions to the latest LTS. (I forgot to do this in the past)
 
-<div style="text-align: right"> v1.6.2 </div>
+<div style="text-align: right"> v1.6.3 </div>
