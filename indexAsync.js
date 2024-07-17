@@ -1,10 +1,7 @@
-const {fileReal} = require("./functions/existsAsync.js");
 const {kill, trailingSlash} = require("./functions/errorHandler.js");
 const {BNS, clog} = require("./functions/basic.js")
 
 const fs = require("fs");
-
-var openCache = []
 
 class AsyncWastefulDB {
    /**
@@ -30,17 +27,35 @@ class AsyncWastefulDB {
       if(!data.id) throw new Error("A document identifier must be provided before it can be created!");
       try {
         directory.dir = trailingSlash(directory.dir);
-        let real = await fileReal(`${directory.dir}${data.id}.json`);
-          if(real) { // If the file already exists
-            // Run the update command later
-          } else { // If the file doesn't exist already
             let obj = JSON.stringify([data]);
-             await fs.promises.writeFile(`${directory.dir}${data.id}.json`, obj);
+             await fs.promises.writeFile(`${directory.dir}${data.id}.json`, obj, {flag: "wx"}); // flag "wx" so an error is thrown if the file exists
              this.feedback ? console.log(`[.insert] : Successfully created ${data.id}.json!`) : "";
               return JSON.parse(obj);
-          }
+          
       } catch(err) {
         kill(this.kill, err.message, ".insert()");
+      }
+    }
+
+    /**
+     * @param {Array} data An array containing *multiple* objects containing keys and values.
+     * @param {String} directory.dir The specific directory to create the document in. (default: `options.path`)
+     * @returns {Array}
+     */
+    async insertBulk(data = [], directory = {dir: this.path}) {
+      try {
+      if(!(data instanceof Array) || data.length < 2) throw new Error("The data given must be an array containing 2 or more objects.");
+       let identifier = data.findIndex(item => item.hasOwnProperty("id"));
+        if(identifier === -1) throw new Error("A document identifier must be provided within one of the objects before it can be created!");
+        // Prep the core values
+         identifier = ((data[identifier]).id).toString();
+         directory.dir = trailingSlash(directory.dir);
+      let obj = JSON.stringify(data);
+        await fs.promises.writeFile(`${directory.dir}${identifier}.json`, obj, {flag: "wx"});
+        this.feedback ? console.log(`[.insertBulk] : Successfully created ${identifier}.json!`) : "";
+          return JSON.parse(obj);
+      } catch(err) {
+        kill(this.kill, err.message, ".find()");
       }
     }
 
@@ -76,8 +91,10 @@ class AsyncWastefulDB {
         if(!(data instanceof Object) || !data.key || !data.change) throw new Error("The 'data' argument must be an Object containing at least both 'key' and 'change' keys with values.");
          if(!identifier) throw new Error("You have to provide the identifier of the target document.");
           var doc = await fs.promises.open(`${trailingSlash(directory.dir)}${identifier}.json`, "r+"); // flag "w+" for read and write
-            let content = await doc.readFile("utf8"); content = (JSON.parse(content))[0];
-          // if(!content[data.key]) throw new Error(`The key provided, "${data.key}", couldn't be found in the target document.`);
+            let content = await doc.readFile("utf8"); content = JSON.parse(content);
+          if(content.length == 1) { // The file was made using .insert()
+            content = content[0];
+            if(!content[data.key]) throw new Error(`The key "${data.key}" couldn't be found.`)
             if(data.child) {
               if(!(content[data.key])[data.child]) throw new Error(`The child key "${data.child}" couldn't be found in the parent key "${data.key}".`);
                 if(data.change == "undefined") { // undefined has to be a string, otherwise the process takes it literally
@@ -91,13 +108,41 @@ class AsyncWastefulDB {
                 delete content[data.key];
               } else {
                 if((data.math && isNaN(content[data.key])) || (data.math && isNaN(data.change))) throw new Error("Unable to perform a math operation. Either the 'change' provided or the given key returned NaN.");
-                 content[data.key] = (data.math ? (Number(content[data.key]) + Number(data.change)) : BNS(data.change));
+                 content[data.key] = (data.math ? (content[data.key] + data.change) : BNS(data.change));
               }
             }
             content = JSON.stringify([content]);
-            await fs.promises.writeFile("./syncData/4321.json", content);
+            await fs.promises.writeFile(`${directory.dir}${identifier}.json`, content);
             this.feedback ? clog(`[.update] : Successfully updated document "${identifier}.json".`) : "";
             return JSON.parse(content);
+
+          } else if(content.length > 1){ // The file was made using .insertBulk()
+
+           let fileKey = content.findIndex(obj => obj.hasOwnProperty(data.key)); // Locates the array
+            if(fileKey == -1) throw new Error(`The key "${data.key}" couldn't be found.`);
+            let fixedContent = content[fileKey]; // The object is now center stage
+
+              if(data.child) { // There is a child key
+                if(!(fixedContent[data.key])[data.child]) throw new Error(`The child key "${data.child}" couldn't be found in the parent key "${data.key}".`);
+                  if(data.change == "undefined") {
+                    delete (fixedContent[fileKey])[data.child]; 
+                  } else {
+                    if((data.math && isNaN((fixedContent[data.key])[data.child])) || (data.math && isNaN(data.change))) throw new Error("[.update] : Unable to perform a math operation. Either the 'change' provided or the given key/child returned NaN.");
+                    (fixedContent[data.key])[data.child] = (data.math ? (fixedContent[data.key])[data.child] + (data.change) : BNS(data.change)); // math? content + change : change
+                  }
+              } else {
+                if(data.change == "undefined") {
+                  delete fixedContent[data.key];
+                } else {
+                  if((data.math && isNaN(fixedContent[data.key])) || (data.math && isNaN(data.change))) throw new Error("Unable to perform a math operation. Either the 'change' provided or the given key returned NaN.");
+                  fixedContent[data.key] = (data.math ? (fixedContent[data.key] + data.change) : BNS(data.change));
+                }
+              }
+              content = JSON.stringify(content);
+              await fs.promises.writeFile(`${directory.dir}${identifier}.json`, content);
+              this.feedback ? clog(`[.update] : Successfully updated document "${identifier}.json".`) : "";
+              return JSON.parse(content);
+          }
       } catch(err) {
         kill(this.kill, err.message, ".update()");
       } finally {
