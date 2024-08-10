@@ -7,14 +7,14 @@ class AsyncWastefulDB {
    /**
    * @param {String} path The default directory each function should target. (default: `./syncData/`)
    * @param {Boolean} feedback Should a message be sent to the console when a function executes? (default: `true`)
-   * @param {Boolean} force If a process encounters a data conflict, should the process ignore this and continue? (default: `false`)
+   * @param {Boolean} parse Should the process parse each result? Setting as `false` will return raw JSON buffers instead.
    * @param {Boolean} kill Should the ongoing process be killed once an error occurs? (default: `false`)
    */
-    constructor(options = {path: "./syncData/", feedback: true, force: false, kill: false}) {
+    constructor(options = {path: "./syncData/", feedback: true, parse: true, kill: false}) {
         this.path = options.path || "./syncData/";
-        this.feedback = options.feedback || true;
-        this.force = options.force || false
-        this.kill = options.kill || false;
+        this.feedback = options.feedback
+        this.parse = options.parse
+        this.kill = options.kill
     }
 
     /**
@@ -30,8 +30,7 @@ class AsyncWastefulDB {
             let obj = JSON.stringify([data]);
              await fs.promises.writeFile(`${directory.dir}${data.id}.json`, obj, {flag: "wx"}); // flag "wx" so an error is thrown if the file exists
              this.feedback ? console.log(`[.insert] : Successfully created ${data.id}.json!`) : "";
-              return JSON.parse(obj);
-          
+              return (this.parse ? JSON.parse : Buffer.from)(obj);
       } catch(err) {
         kill(this.kill, err.message, ".insert()");
       }
@@ -52,10 +51,10 @@ class AsyncWastefulDB {
          directory.dir = trailingSlash(directory.dir);
       let obj = JSON.stringify(data);
         await fs.promises.writeFile(`${directory.dir}${identifier}.json`, obj, {flag: "wx"});
-        this.feedback ? console.log(`[.insertBulk] : Successfully created ${identifier}.json!`) : "";
-          return JSON.parse(obj);
+        this.feedback ? console.log(`[.insertBulk()] : Successfully created ${identifier}.json!`) : "";
+          return (this.parse ? JSON.parse : Buffer.from)(obj);
       } catch(err) {
-        kill(this.kill, err.message, ".find()");
+        kill(this.kill, err.message, ".insertBulk()");
       }
     }
 
@@ -68,10 +67,32 @@ class AsyncWastefulDB {
     async find(identifier, directory = {dir: this.path}) {
       try {
        let data = await fs.promises.readFile(`${trailingSlash(directory.dir)}${identifier}.json`);
-       data = JSON.parse(data);
+       data = (this.parse ? JSON.parse : Buffer.from)(data);
+       this.feedback ? console.log(`[.find()] : Successfully found ${identifier}.json!`) : ""
         return data.length > 1 ? data : data[0];
       } catch(err) {
         kill(this.kill, err.message, ".find()");
+      }
+    }
+
+    /**
+     * @param {Array} identifiers An array of identifiers to search for. Returns `-1` if a document doesn't exist or isn't accessible.
+     * @param {String} directory.dir The target directory that contains all the given documents. (default: `options.path`)
+     * @returns {Array}
+     */
+
+    async findMore(identifiers, directory = {dir: this.path}) {
+      try {
+        if(identifiers.length == 1) return await this.find(identifiers[0], {dir: directory.dir}); // forward single-item arrays to the normal find.
+        let docs = [], data;
+          for(const id of identifiers) { // I didn't know this was a thing...
+            data = (this.parse ? JSON.parse : Buffer.from)(await fs.promises.readFile(`${trailingSlash(directory.dir)}${id}.json`).catch(err => {return -1}));
+            docs.push(data);
+          }
+        this.feedback ? console.log(`[.findMore()] : Successfully executed a search for ${identifiers.length} documents!`) : "";
+        return docs;
+      } catch(err) {
+        kill(this.kill, err.message, ".findMore()");
       }
     }
 
@@ -113,8 +134,8 @@ class AsyncWastefulDB {
             }
             content = JSON.stringify([content]);
             await fs.promises.writeFile(`${directory.dir}${identifier}.json`, content);
-            this.feedback ? clog(`[.update] : Successfully updated document "${identifier}.json".`) : "";
-            return JSON.parse(content);
+            this.feedback ? clog(`[.update()] : Successfully updated document "${identifier}.json".`) : "";
+            return (this.parse ? JSON.parse : Buffer.from)(content);
 
           } else if(content.length > 1){ // The file was made using .insertBulk()
 
@@ -140,8 +161,8 @@ class AsyncWastefulDB {
               }
               content = JSON.stringify(content);
               await fs.promises.writeFile(`${directory.dir}${identifier}.json`, content);
-              this.feedback ? clog(`[.update] : Successfully updated document "${identifier}.json".`) : "";
-              return JSON.parse(content);
+              this.feedback ? clog(`[.update()] : Successfully updated document "${identifier}.json".`) : "";
+              return (this.parse ? JSON.parse : Buffer.from)(content);
           }
       } catch(err) {
         kill(this.kill, err.message, ".update()");
