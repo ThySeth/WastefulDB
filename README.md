@@ -12,6 +12,9 @@ const db = new Wasteful();
 - `NodeJS v18.14.2 or higher`
 - `NPM v9.5.0 or higher`
 
+### Synchronous Documentation
+- [WastefulDB GitBook](https://wastefuldb.gitbook.io/wastefuldb-1)
+
 # Table of Content
 - [Constructor](#constructor)
 - [Specifying Directories](#specifying-directories)
