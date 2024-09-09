@@ -10,8 +10,8 @@ class AsyncWastefulDB {
    * @param {Boolean} parse Should the process parse each result? Setting as `false` will return raw JSON buffers instead.
    * @param {Boolean} kill Should the ongoing process be killed once an error occurs? (default: `false`)
    */
-    constructor(options = {path: "./syncData/", feedback: true, parse: true, kill: false}) {
-        this.path = options.path || "./syncData/";
+    constructor(options = {path: `${__dirname}/syncData/`, feedback: true, parse: true, kill: false}) {
+        this.path = options.path || `${__dirname}/syncData/`;
         this.feedback = options.feedback
         this.parse = options.parse
         this.kill = options.kill
@@ -115,7 +115,10 @@ class AsyncWastefulDB {
             let content = await doc.readFile("utf8"); content = JSON.parse(content);
           if(content.length == 1) { // The file was made using .insert()
             content = content[0];
-            if(!content[data.key]) throw new Error(`The key "${data.key}" couldn't be found.`)
+            if(!content[data.key] || (!content[data.key] && !(content[data.key])[data.child])) { // This catches any missing key & child keys.
+              let obj = content;
+                !data.child ? obj[data.key] = BNS(data.change) : (obj[data.key] = {}) && ((obj[data.key])[data.child] = BNS(data.change))
+            } else {
             if(data.child) {
               if(!(content[data.key])[data.child]) throw new Error(`The child key "${data.child}" couldn't be found in the parent key "${data.key}".`);
                 if(data.change == "undefined") { // undefined has to be a string, otherwise the process takes it literally
@@ -132,6 +135,7 @@ class AsyncWastefulDB {
                  content[data.key] = (data.math ? (content[data.key] + data.change) : BNS(data.change));
               }
             }
+          }
             content = JSON.stringify([content]);
             await fs.promises.writeFile(`${directory.dir}${identifier}.json`, content);
             this.feedback ? clog(`[.update()] : Successfully updated document "${identifier}.json".`) : "";
@@ -140,9 +144,11 @@ class AsyncWastefulDB {
           } else if(content.length > 1){ // The file was made using .insertBulk()
 
            let fileKey = content.findIndex(obj => obj.hasOwnProperty(data.key)); // Locates the array
-            if(fileKey == -1) throw new Error(`The key "${data.key}" couldn't be found.`);
+            // if(fileKey == -1) throw new Error(`The key "${data.key}" couldn't be found.`);
             let fixedContent = content[fileKey]; // The object is now center stage
-
+            if(!content[data.key] || !(content[data.key])[data.child]) {
+              (content[data.key])[data.child] = data.change;
+            } else {
               if(data.child) { // There is a child key
                 if(!(fixedContent[data.key])[data.child]) throw new Error(`The child key "${data.child}" couldn't be found in the parent key "${data.key}".`);
                   if(data.change == "undefined") {
@@ -164,6 +170,7 @@ class AsyncWastefulDB {
               this.feedback ? clog(`[.update()] : Successfully updated document "${identifier}.json".`) : "";
               return (this.parse ? JSON.parse : Buffer.from)(content);
           }
+        }
       } catch(err) {
         kill(this.kill, err.message, ".update()");
       } finally {
