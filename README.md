@@ -9,20 +9,27 @@ const db = new Wasteful();
 ```
 
 ### Recommendations:
-- `NodeJS v20.15.1 or higher`
-- `NPM v10.7.0 or higher`
+- `NodeJS v18.14.2 or higher`
+- `NPM v9.5.0 or higher`
+
+### 📜 Synchronous Documentation
+- [WastefulDB GitBook](https://wastefuldb.gitbook.io/wastefuldb)
+
+### ✏️ Asynchronous Documentation
+- [AsyncWastefulDB GitBook](https://wastefuldb.gitbook.io/wastefuldb/v/asyncwastefuldb)
+
 
 # Table of Content
 - [Constructor](#constructor)
 - [Specifying Directories](#specifying-directories)
 - [Functions](#functions)
   - [Insert Documents](#insert "db.insert()")
-  - [Insert Bulk Documents](#insertbulkarray-of-objects "db.insertBulk()")
+  - [Insert Bulk Documents](#insertbulk "db.insertBulk()")
   - [Find Documents](#findid "db.find()")
   - [Find More Documents](#findmoredata)
   - ["Get" Documents](#getid-dir-callback "db.get()")
-  - [Append Data](#appendid-key-value-position)
-  - [Update a Document](#updateid-key-change-math "db.update()")
+  - [Append Data](#append)
+  - [Update a Document](#update "db.update()")
     - [Update a Nested Object](#update-with-child-value)
   - [Update Multiple Objects](#mupdateid-array-of-objects "db.mupdate()")
   - [Collect Documents](#collectid-key-value "db.collect()")
@@ -185,7 +192,7 @@ db.undo();
 
 
 # <ins>Update Notes</ins>
-- Fixed some of the the items in the table of contents not jumping to the right points
-- Updated the recommended NodeJS and NPM versions to the latest LTS. (I forgot to do this in the past)
+- Added new GitBook links to some documentation for both the synchronous and asynchronous versions!
+- AsyncWastefulDB has basic functions ready to use!
 
-<div style="text-align: right"> v1.6.3 </div>
+<div style="text-align: right"> v1.6.4 </div>
