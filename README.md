@@ -12,8 +12,12 @@ const db = new Wasteful();
 - `NodeJS v18.14.2 or higher`
 - `NPM v9.5.0 or higher`
 
-### Synchronous Documentation
-- [WastefulDB GitBook](https://wastefuldb.gitbook.io/wastefuldb-1)
+### 📜 Synchronous Documentation
+- [WastefulDB GitBook](https://wastefuldb.gitbook.io/wastefuldb)
+
+### ✏️ Asynchronous Documentation
+- [AsyncWastefulDB GitBook](https://wastefuldb.gitbook.io/wastefuldb/v/asyncwastefuldb)
+
 
 # Table of Content
 - [Constructor](#constructor)
@@ -188,7 +192,7 @@ db.undo();
 
 
 # <ins>Update Notes</ins>
-- Fixed the constructor throwing a reference error when no arguments are specified.
-- The {log} option now allows for directory specification similar to every function. Declare {log} as an object with {enable: Boolean, dir: "path"}
+- Added new GitBook links to some documentation for both the synchronous and asynchronous versions!
+- AsyncWastefulDB has basic functions ready to use!
 
-<div style="text-align: right"> v1.6.2 </div>
+<div style="text-align: right"> v1.6.3 </div>
