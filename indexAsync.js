@@ -111,7 +111,7 @@ class AsyncWastefulDB {
       try {
         if(!(data instanceof Object) || !data.key || !data.change) throw new Error("The 'data' argument must be an Object containing at least both 'key' and 'change' keys with values.");
          if(!identifier) throw new Error("You have to provide the identifier of the target document.");
-          var doc = await fs.promises.open(`${trailingSlash(directory.dir)}${identifier}.json`, "r+"); // flag "w+" for read and write
+          var doc = await fs.promises.open(`${trailingSlash(directory.dir)}${identifier}.json`, "r+");
             let content = await doc.readFile("utf8"); content = JSON.parse(content);
           if(content.length == 1) { // The file was made using .insert()
             content = content[0];
@@ -140,9 +140,7 @@ class AsyncWastefulDB {
             await fs.promises.writeFile(`${directory.dir}${identifier}.json`, content);
             this.feedback ? clog(`[.update()] : Successfully updated document "${identifier}.json".`) : "";
             return (this.parse ? JSON.parse : Buffer.from)(content);
-
           } else if(content.length > 1){ // The file was made using .insertBulk()
-
            let fileKey = content.findIndex(obj => obj.hasOwnProperty(data.key)); // Locates the array
             // if(fileKey == -1) throw new Error(`The key "${data.key}" couldn't be found.`);
             let fixedContent = content[fileKey]; // The object is now center stage
