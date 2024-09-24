@@ -192,7 +192,13 @@ db.undo();
 
 
 # <ins>Update Notes</ins>
-- Added new GitBook links to some documentation for both the synchronous and asynchronous versions!
-- AsyncWastefulDB has basic functions ready to use!
+**AsyncWastefulDB**
+- Added 2 more functions!
+  - .mupdate()
+  - .check()
+- Added some more documentation to each function
+- Removed doc.close() at the end of try/catches. It didn't work as expected.
+- Made a small adjustment to .update(). This allows .mupdate() to process a single-object array instead of throwing an error.
+  - Created another one-line process which compresses and handles appending missing key/child keys to a document. I don't know how well it'll work.
 
-<div style="text-align: right"> v1.6.4 </div>
+<div style="text-align: right"> v1.6.5 </div>
