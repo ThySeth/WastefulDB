@@ -21,6 +21,8 @@ class AsyncWastefulDB {
      * @param {Object} data A *single* object containing keys and values.
      * @param {String} directory.dir A specific directory path you want to insert to. (default: `options.path`)
      * @returns {Array}
+     * 
+     * @example await db.insert({id: "7", name: "Moe", number: 8});
      */
     async insert(data, directory = {dir: this.path}) {
       if(!(data instanceof Object)) throw new Error("The data given must be contained within an Object.");
@@ -40,6 +42,8 @@ class AsyncWastefulDB {
      * @param {Array} data An array containing *multiple* objects containing keys and values.
      * @param {String} directory.dir The specific directory to create the document in. (default: `options.path`)
      * @returns {Array}
+     * 
+     * @example await db.insertBulk([{id: "5678"}, {name: "Brian"}, {number: 3}])
      */
     async insertBulk(data = [], directory = {dir: this.path}) {
       try {
@@ -60,8 +64,10 @@ class AsyncWastefulDB {
 
     /**
      * @param {String} identifier The identifier, or document name, to search for.
-     * @param {String} directory.dir The directory path to search for the document.
+     * @param {String} directory.dir The directory path to search for the document. (default: `options.path`)
      * @returns {Object | Array}
+     * 
+     * @example const result = await db.find("6");
      */
 
     async find(identifier, directory = {dir: this.path}) {
@@ -79,6 +85,8 @@ class AsyncWastefulDB {
      * @param {Array} identifiers An array of identifiers to search for. Returns `-1` if a document doesn't exist or isn't accessible.
      * @param {String} directory.dir The target directory that contains all the given documents. (default: `options.path`)
      * @returns {Array}
+     * 
+     * @example const result = await db.findMore(["6", "4321"]);
      */
 
     async findMore(identifiers, directory = {dir: this.path}) {
@@ -104,15 +112,17 @@ class AsyncWastefulDB {
      * @param   {String | Number} data.change What should the target key/child be changed to?
      * @param   {Number} data.math Does the 'change' require *simple* math? (default: `false`)
      * 
-     * @param {String} directory.dir The directory to search for the document in.
-     * @returns {Array}
+     * @param {String} directory.dir The directory to search for the document in. (default: `options.path`)
+     * @returns {Array | Buffer}
+     * 
+     * @example await db.update("6", {key: "foo", child: "bar", change: "biz"})
      */
     async update(identifier, data = {key, child, change, math: false}, directory = {dir: this.path}) {
       try {
         if(!(data instanceof Object) || !data.key || !data.change) throw new Error("The 'data' argument must be an Object containing at least both 'key' and 'change' keys with values.");
          if(!identifier) throw new Error("You have to provide the identifier of the target document.");
-          var doc = await fs.promises.open(`${trailingSlash(directory.dir)}${identifier}.json`, "r+");
-            let content = await doc.readFile("utf8"); content = JSON.parse(content);
+          const doc = await fs.promises.open(`${trailingSlash(directory.dir)}${identifier}.json`, "r+");
+            var content = await doc.readFile("utf8"); content = JSON.parse(content);
           if(content.length == 1) { // The file was made using .insert()
             content = content[0];
             if(!content[data.key] || (!content[data.key] && !(content[data.key])[data.child])) { // This catches any missing key & child keys.
@@ -138,15 +148,13 @@ class AsyncWastefulDB {
           }
             content = JSON.stringify([content]);
             await fs.promises.writeFile(`${directory.dir}${identifier}.json`, content);
-            this.feedback ? clog(`[.update()] : Successfully updated document "${identifier}.json".`) : "";
+            this.feedback ? clog(`[.update()] : Successfully updated "${identifier}.json".`) : "";
             return (this.parse ? JSON.parse : Buffer.from)(content);
           } else if(content.length > 1){ // The file was made using .insertBulk()
            let fileKey = content.findIndex(obj => obj.hasOwnProperty(data.key)); // Locates the array
             // if(fileKey == -1) throw new Error(`The key "${data.key}" couldn't be found.`);
-            let fixedContent = content[fileKey]; // The object is now center stage
-            if(!content[data.key] || !(content[data.key])[data.child]) {
-              (content[data.key])[data.child] = data.change;
-            } else {
+            if(fileKey == -1) return !data.child ? (content[fileKey])[data.key] = data.change : ((content[fileKey])[data.key] = {}) && (((content[fileKey])[data.key])[data.child] = data.change);
+            var fixedContent = content[fileKey]; // The object is now center stage
               if(data.child) { // There is a child key
                 if(!(fixedContent[data.key])[data.child]) throw new Error(`The child key "${data.child}" couldn't be found in the parent key "${data.key}".`);
                   if(data.change == "undefined") {
@@ -165,15 +173,101 @@ class AsyncWastefulDB {
               }
               content = JSON.stringify(content);
               await fs.promises.writeFile(`${directory.dir}${identifier}.json`, content);
-              this.feedback ? clog(`[.update()] : Successfully updated document "${identifier}.json".`) : "";
+              this.feedback ? clog(`[.update()] : Successfully updated "${identifier}.json".`) : "";
               return (this.parse ? JSON.parse : Buffer.from)(content);
           }
-        }
       } catch(err) {
         kill(this.kill, err.message, ".update()");
-      } finally {
-        await doc?.close();
       }
+    }
+
+    /**
+     * @param {String} id The identifier of the target document.
+     * @param {Array} data An array of Objects containing the same parameters needed in `.update()`
+     * @param {String} directory.dir The directory to search for the document identifier. (default: `options.path`)
+     * 
+     * @returns {Array | Buffer}
+     * 
+     * @example await db.mupdate("4321", [ {key: "name", change: "Stewart"}, {key: "number", change: 2, math: true} ])
+     */
+    async mupdate(id, data = [], directory = {dir: this.path}) {
+      try {
+       if(!id instanceof String) throw new Error(`The "id" argument must be a String. Received ${typeof id} instead.`);
+        if(!data || !data instanceof Array) throw new Error(`The "data" argument must be an Array. Received ${typeof data} instead.`);
+          if(data.length == 1) return this.update(id, data[0], {dir: directory.dir}); // Catch and redirect single item array arguments
+            const doc = await fs.promises.open(`${trailingSlash(directory.dir)}${id}.json`, "r+"); // Open document with filehandle. r+ to throw an error if it doesn't exist.
+            var content = JSON.parse(await doc.readFile("utf8")); // Parsed! 
+      
+      if(content.length == 1) { // [ --ONE OBJECT ONLY-- ]
+        content = content[0]
+        data.forEach((entry) => { // Going through each object
+        // for(let i = 0; i < data.length; i++) {
+        //   let entry = data[i];
+        // }
+          if(entry.key === undefined || entry.change === undefined) throw new Error(`Unable to update "${id}.json". One or more Objects in the "data" argument are missing "key" and "change" values.`);
+           if(entry.change == "undefined") return delete (entry.child ? (content[entry.key])[entry.child] : content[entry.key]); // Deletes a key/child if the change is "undefined".
+            if(entry.child) { // [ CHILD KEY PRESENT ]
+              if(!content[entry.key] || !(content[entry.key])[entry.child]) { // No key/child exists. Creates one!
+                content[entry.key] = {};
+                 (content[entry.key])[entry.child] = BNS(entry.change) // Math checking isn't needed... It's a new key.
+              } else {
+                if((entry.math && isNaN((content[entry.key])[entry.child])) || (entry.math && isNaN(entry.change))) throw new Error(`Unable to update a key in "${id}.json". "math" is declared true but the target "key", "child", or "change" returned as NaN.`);
+                 (content[entry.key])[entry.child] = (entry.math ? (content[entry.key])[entry.child] + (entry.change) : BNS(entry.change));
+              }
+            } else { // [ KEY ONLY PRESENT ]
+              if(!content[entry.key]) { // No key exists. Creates one.
+                content[entry.key] = entry.change;
+              } else {
+                if((entry.math && isNaN(content[entry.key])) || (entry.math && isNaN(entry.change))) throw new Error(`Unable to update a key in "${id}.json". "math" is declared true but the target "key" or "change" returned as NaN.`);
+                 content[entry.key] = (entry.math ? (content[entry.key] + entry.change) : BNS(entry.change));
+              }
+            }
+        })
+        content = JSON.stringify([content])
+         await fs.promises.writeFile(`${trailingSlash(directory.dir)}${id}.json`, content);
+          this.feedback ? clog(`[.mupdate()] : Successfully made ${data.length} changes to "${id}.json".`) : "";
+           return (this.parse ? JSON.parse : Buffer.from)(content);
+      } else if(content.length > 1) { // [ --TWO+ OBJECT ONLY-- ]
+        data.forEach(entry => {
+          let target = content.findIndex(obj => obj.hasOwnProperty(entry.key)); // "content" is still an ARRAY
+           if(target == -1) { // The key doesn't exist!
+            // If there isn't a child key needed, just creates the key. Otherwise, creates a child key.
+            // The key/child is created in the last Object in the Array.
+             return !entry.child ? (content[content.length-1])[entry.key] = entry.change : ((content[content.length-1])[entry.key] = {}) && (((content[content.length-1])[entry.key])[entry.child] = entry.change);
+           } else {
+             target = content[target]; // "target" is now the Object to change. Changes should be reflected back to "content".
+              if(entry.child) { // [ CHILD KEY PRESENT ] - (Everything from here is pretty much identical to single objects above)
+                if((entry.math && isNaN((target[entry.key])[entry.child])) || (entry.math && isNaN(entry.change))) throw new Error(`Unable to update a key in "${id}.json". "math" is declared true but the target "key", "child", or "change" returned as NaN.`);
+                 (target[entry.key])[entry.child] = (entry.math ? (target[entry.key])[entry.child] + (entry.change) : BNS(entry.change));
+              } else { // [ NO CHILD KEY PRESENT ]
+                if((entry.math && isNaN(target[entry.key])) || (entry.math && isNaN(entry.change))) throw new Error(`Unable to update a key in "${id}.json". "math" is declared true but the target "key" or "change" returned as NaN.`);
+                 target[entry.key] = (entry.math ? (target[entry.key] + entry.change) : BNS(entry.change));
+              }
+           }
+        })
+        content = JSON.stringify(content);
+         await fs.promises.writeFile(`${trailingSlash(directory.dir)}${id}.json`, content);
+          this.feedback ? clog(`[.mupdate()] : Successfully made ${data.length} changes to "${id}.json".`) : "";
+           return (this.parse ? JSON.parse : Buffer.from)(content);
+      }
+      } catch(err) {
+        kill(this.kill, err.message, ".mupdate()");
+      }
+    }
+
+    /**
+     * @param {String} identifier
+     * @param {String} directory.dir
+     * @returns {Boolean}
+     */
+    async check(identifier, directory = {dir: this.path}) {
+      if(!identifier || !identifier instanceof String) throw new Error(`The "id" argument must be a String. Received "${typeof identifier}" instead.`);
+       try {
+        await fs.promises.stat(`${trailingSlash(directory.dir)}${identifier}.json`);
+         return true;
+       } catch(err) {
+        return false;
+       }
     }
 
 }
