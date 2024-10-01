@@ -149,6 +149,7 @@ class AsyncWastefulDB {
             content = JSON.stringify([content]);
             await fs.promises.writeFile(`${directory.dir}${identifier}.json`, content);
             this.feedback ? clog(`[.update()] : Successfully updated "${identifier}.json".`) : "";
+            await doc.close();
             return (this.parse ? JSON.parse : Buffer.from)(content);
           } else if(content.length > 1){ // The file was made using .insertBulk()
            let fileKey = content.findIndex(obj => obj.hasOwnProperty(data.key)); // Locates the array
@@ -174,6 +175,7 @@ class AsyncWastefulDB {
               content = JSON.stringify(content);
               await fs.promises.writeFile(`${directory.dir}${identifier}.json`, content);
               this.feedback ? clog(`[.update()] : Successfully updated "${identifier}.json".`) : "";
+              await doc.close();
               return (this.parse ? JSON.parse : Buffer.from)(content);
           }
       } catch(err) {
@@ -226,6 +228,7 @@ class AsyncWastefulDB {
         content = JSON.stringify([content])
          await fs.promises.writeFile(`${trailingSlash(directory.dir)}${id}.json`, content);
           this.feedback ? clog(`[.mupdate()] : Successfully made ${data.length} changes to "${id}.json".`) : "";
+          await doc.close();
            return (this.parse ? JSON.parse : Buffer.from)(content);
       } else if(content.length > 1) { // [ --TWO+ OBJECT ONLY-- ]
         data.forEach(entry => {
@@ -248,6 +251,7 @@ class AsyncWastefulDB {
         content = JSON.stringify(content);
          await fs.promises.writeFile(`${trailingSlash(directory.dir)}${id}.json`, content);
           this.feedback ? clog(`[.mupdate()] : Successfully made ${data.length} changes to "${id}.json".`) : "";
+          await doc.close();
            return (this.parse ? JSON.parse : Buffer.from)(content);
       }
       } catch(err) {
