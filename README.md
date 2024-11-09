@@ -192,7 +192,11 @@ db.undo();
 
 
 # <ins>Update Notes</ins>
-- Added new GitBook links to some documentation for both the synchronous and asynchronous versions!
-- AsyncWastefulDB has basic functions ready to use!
+**AsyncWastefulDB**
+- Fixed .update() not creating keys and child keys that are missing.
+- Fixed an error being thrown while trying to delete keys of multi-object documents using .update().
+- Added a new optional parameter to .update()! Specify a "position" to decide where a non-existent key/child should be created.
+  - The internal name for the optional parameters was changed from "directory" to "options".
+  - So programs flow better, the "position" option will NOT throw errors if the value is greater or less than the size of an array.
 
-<div style="text-align: right"> v1.6.3 </div>
+<div style="text-align: right"> v1.6.7 </div>
