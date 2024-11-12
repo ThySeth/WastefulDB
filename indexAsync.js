@@ -1,279 +1,202 @@
-const {kill, trailingSlash} = require("./functions/errorHandler.js");
-const {BNS, clog} = require("./functions/basic.js")
+# WastefulDB
+A little custom made, document-oriented database project made with JavaScript and JSON for convenience.
 
-const fs = require("fs");
 
-class AsyncWastefulDB {
-   /**
-   * @param {String} path The default directory each function should target. (default: `./syncData/`)
-   * @param {Boolean} feedback Should a message be sent to the console when a function executes? (default: `true`)
-   * @param {Boolean} parse Should the process parse each result? Setting as `false` will return raw JSON buffers instead.
-   * @param {Boolean} kill Should the ongoing process be killed once an error occurs? (default: `false`)
-   */
-    constructor(options = {path: `${__dirname}/syncData/`, feedback: true, parse: true, kill: false}) {
-        this.path = options.path || `${__dirname}/syncData/`;
-        this.feedback = options.feedback
-        this.parse = options.parse
-        this.kill = options.kill
-    }
+### Quick Setup
+```js
+const Wasteful = require('wastefuldb');
+const db = new Wasteful();
+```
 
-    /**
-     * @param {Object} data A *single* object containing keys and values.
-     * @param {String} directory.dir A specific directory path you want to insert to. (default: `options.path`)
-     * @returns {Array}
-     * 
-     * @example await db.insert({id: "7", name: "Moe", number: 8});
-     */
-    async insert(data, directory = {dir: this.path}) {
-      if(!(data instanceof Object)) throw new Error("The data given must be contained within an Object.");
-      if(!data.id) throw new Error("A document identifier must be provided before it can be created!");
-      try {
-        directory.dir = trailingSlash(directory.dir);
-            let obj = JSON.stringify([data]);
-             await fs.promises.writeFile(`${directory.dir}${data.id}.json`, obj, {flag: "wx"}); // flag "wx" so an error is thrown if the file exists
-             this.feedback ? console.log(`[.insert] : Successfully created ${data.id}.json!`) : "";
-              return (this.parse ? JSON.parse : Buffer.from)(obj);
-      } catch(err) {
-        kill(this.kill, err.message, ".insert()");
-      }
-    }
+### Recommendations:
+- `NodeJS v18.14.2 or higher`
+- `NPM v9.5.0 or higher`
 
-    /**
-     * @param {Array} data An array containing *multiple* objects containing keys and values.
-     * @param {String} directory.dir The specific directory to create the document in. (default: `options.path`)
-     * @returns {Array}
-     * 
-     * @example await db.insertBulk([{id: "5678"}, {name: "Brian"}, {number: 3}])
-     */
-    async insertBulk(data = [], directory = {dir: this.path}) {
-      try {
-      if(!(data instanceof Array) || data.length < 2) throw new Error("The data given must be an array containing 2 or more objects.");
-       let identifier = data.findIndex(item => item.hasOwnProperty("id"));
-        if(identifier === -1) throw new Error("A document identifier must be provided within one of the objects before it can be created!");
-        // Prep the core values
-         identifier = ((data[identifier]).id).toString();
-         directory.dir = trailingSlash(directory.dir);
-      let obj = JSON.stringify(data);
-        await fs.promises.writeFile(`${directory.dir}${identifier}.json`, obj, {flag: "wx"});
-        this.feedback ? console.log(`[.insertBulk()] : Successfully created ${identifier}.json!`) : "";
-          return (this.parse ? JSON.parse : Buffer.from)(obj);
-      } catch(err) {
-        kill(this.kill, err.message, ".insertBulk()");
-      }
-    }
+### 📜 Synchronous Documentation
+- [WastefulDB GitBook](https://wastefuldb.gitbook.io/wastefuldb)
 
-    /**
-     * @param {String} identifier The identifier, or document name, to search for.
-     * @param {String} directory.dir The directory path to search for the document. (default: `options.path`)
-     * @returns {Object | Array}
-     * 
-     * @example const result = await db.find("6");
-     */
+### ✏️ Asynchronous Documentation
+- [AsyncWastefulDB GitBook](https://wastefuldb.gitbook.io/wastefuldb/v/asyncwastefuldb)
 
-    async find(identifier, directory = {dir: this.path}) {
-      try {
-       let data = await fs.promises.readFile(`${trailingSlash(directory.dir)}${identifier}.json`);
-       data = (this.parse ? JSON.parse : Buffer.from)(data);
-       this.feedback ? console.log(`[.find()] : Successfully found ${identifier}.json!`) : ""
-        return data.length > 1 ? data : data[0];
-      } catch(err) {
-        kill(this.kill, err.message, ".find()");
-      }
-    }
 
-    /**
-     * @param {Array} identifiers An array of identifiers to search for. Returns `-1` if a document doesn't exist or isn't accessible.
-     * @param {String} directory.dir The target directory that contains all the given documents. (default: `options.path`)
-     * @returns {Array}
-     * 
-     * @example const result = await db.findMore(["6", "4321"]);
-     */
+# Table of Content
+- [Constructor](#constructor)
+- [Specifying Directories](#specifying-directories)
+- [Functions](#functions)
+  - [Insert Documents](#insert "db.insert()")
+  - [Insert Bulk Documents](#insertbulk "db.insertBulk()")
+  - [Find Documents](#findid "db.find()")
+  - [Find More Documents](#findmoredata)
+  - ["Get" Documents](#getid-dir-callback "db.get()")
+  - [Append Data](#append)
+  - [Update a Document](#update "db.update()")
+    - [Update a Nested Object](#update-with-child-value)
+  - [Update Multiple Objects](#mupdateid-array-of-objects "db.mupdate()")
+  - [Collect Documents](#collectid-key-value "db.collect()")
+  - [Replicate Documents](#replicateid-to-from-force "db.replicate()")
+  - [Overwrite Documents](#setid-data-dir "db.set()")
+  - [Undo Updates](#undo "db.undo")
+- [Update Notes](#update-notes)
 
-    async findMore(identifiers, directory = {dir: this.path}) {
-      try {
-        if(identifiers.length == 1) return await this.find(identifiers[0], {dir: directory.dir}); // forward single-item arrays to the normal find.
-        let docs = [], data;
-          for(const id of identifiers) { // I didn't know this was a thing...
-            data = (this.parse ? JSON.parse : Buffer.from)(await fs.promises.readFile(`${trailingSlash(directory.dir)}${id}.json`).catch(err => {return -1}));
-            docs.push(data);
-          }
-        this.feedback ? console.log(`[.findMore()] : Successfully executed a search for ${identifiers.length} documents!`) : "";
-        return docs;
-      } catch(err) {
-        kill(this.kill, err.message, ".findMore()");
-      }
-    }
 
-    /**
-     * @param {String} identifier The identifier of the target document.
-     * 
-     * @param   {String} data.key The target key to be changed in the document.
-     * @param     {String} data.child The child key of the target key to change.
-     * @param   {String | Number} data.change What should the target key/child be changed to?
-     * @param   {Number} data.math Does the 'change' require *simple* math? (default: `false`)
-     * 
-     * @param {String} directory.dir The directory to search for the document in. (default: `options.path`)
-     * @returns {Array | Buffer}
-     * 
-     * @example await db.update("6", {key: "foo", child: "bar", change: "biz"})
-     */
-    async update(identifier, data = {key, child, change, math: false}, directory = {dir: this.path}) {
-      try {
-        if(!(data instanceof Object) || !data.key || !data.change) throw new Error("The 'data' argument must be an Object containing at least both 'key' and 'change' keys with values.");
-         if(!identifier) throw new Error("You have to provide the identifier of the target document.");
-          const doc = await fs.promises.open(`${trailingSlash(directory.dir)}${identifier}.json`, "r+");
-            var content = await doc.readFile("utf8"); content = JSON.parse(content);
-          if(content.length == 1) { // The file was made using .insert()
-            content = content[0];
-            if(!content[data.key] || (!content[data.key] && !(content[data.key])[data.child])) { // This catches any missing key & child keys.
-              let obj = content;
-                !data.child ? obj[data.key] = BNS(data.change) : (obj[data.key] = {}) && ((obj[data.key])[data.child] = BNS(data.change))
-            } else {
-            if(data.child) {
-              if(!(content[data.key])[data.child]) throw new Error(`The child key "${data.child}" couldn't be found in the parent key "${data.key}".`);
-                if(data.change == "undefined") { // undefined has to be a string, otherwise the process takes it literally
-                  delete (content[data.key])[data.child];
-                } else {
-                  if((data.math && isNaN((content[data.key])[data.child])) || (data.math && isNaN(data.change))) throw new Error("[.update] : Unable to perform a math operation. Either the 'change' provided or the given key/child returned NaN.");
-                   (content[data.key])[data.child] = (data.math ? (content[data.key])[data.child] + (data.change) : BNS(data.change)); // math? content + change : change
-                }
-            } else { // No child key
-              if(data.change == "undefined") {
-                delete content[data.key];
-              } else {
-                if((data.math && isNaN(content[data.key])) || (data.math && isNaN(data.change))) throw new Error("Unable to perform a math operation. Either the 'change' provided or the given key returned NaN.");
-                 content[data.key] = (data.math ? (content[data.key] + data.change) : BNS(data.change));
-              }
-            }
-          }
-            content = JSON.stringify([content]);
-            await fs.promises.writeFile(`${directory.dir}${identifier}.json`, content);
-            this.feedback ? clog(`[.update()] : Successfully updated "${identifier}.json".`) : "";
-            await doc.close();
-            return (this.parse ? JSON.parse : Buffer.from)(content);
-          } else if(content.length > 1){ // The file was made using .insertBulk()
-           let fileKey = content.findIndex(obj => obj.hasOwnProperty(data.key)); // Locates the array
-            // if(fileKey == -1) throw new Error(`The key "${data.key}" couldn't be found.`);
-            if(fileKey == -1) return !data.child ? (content[fileKey])[data.key] = data.change : ((content[fileKey])[data.key] = {}) && (((content[fileKey])[data.key])[data.child] = data.change);
-            var fixedContent = content[fileKey]; // The object is now center stage
-              if(data.child) { // There is a child key
-                if(!(fixedContent[data.key])[data.child]) throw new Error(`The child key "${data.child}" couldn't be found in the parent key "${data.key}".`);
-                  if(data.change == "undefined") {
-                    delete (fixedContent[fileKey])[data.child]; 
-                  } else {
-                    if((data.math && isNaN((fixedContent[data.key])[data.child])) || (data.math && isNaN(data.change))) throw new Error("[.update] : Unable to perform a math operation. Either the 'change' provided or the given key/child returned NaN.");
-                    (fixedContent[data.key])[data.child] = (data.math ? (fixedContent[data.key])[data.child] + (data.change) : BNS(data.change)); // math? content + change : change
-                  }
-              } else {
-                if(data.change == "undefined") {
-                  delete fixedContent[data.key];
-                } else {
-                  if((data.math && isNaN(fixedContent[data.key])) || (data.math && isNaN(data.change))) throw new Error("Unable to perform a math operation. Either the 'change' provided or the given key returned NaN.");
-                  fixedContent[data.key] = (data.math ? (fixedContent[data.key] + data.change) : BNS(data.change));
-                }
-              }
-              content = JSON.stringify(content);
-              await fs.promises.writeFile(`${directory.dir}${identifier}.json`, content);
-              this.feedback ? clog(`[.update()] : Successfully updated "${identifier}.json".`) : "";
-              await doc.close();
-              return (this.parse ? JSON.parse : Buffer.from)(content);
-          }
-      } catch(err) {
-        kill(this.kill, err.message, ".update()");
-      }
-    }
 
-    /**
-     * @param {String} id The identifier of the target document.
-     * @param {Array} data An array of Objects containing the same parameters needed in `.update()`
-     * @param {String} directory.dir The directory to search for the document identifier. (default: `options.path`)
-     * 
-     * @returns {Array | Buffer}
-     * 
-     * @example await db.mupdate("4321", [ {key: "name", change: "Stewart"}, {key: "number", change: 2, math: true} ])
-     */
-    async mupdate(id, data = [], directory = {dir: this.path}) {
-      try {
-       if(!id instanceof String) throw new Error(`The "id" argument must be a String. Received ${typeof id} instead.`);
-        if(!data || !data instanceof Array) throw new Error(`The "data" argument must be an Array. Received ${typeof data} instead.`);
-          if(data.length == 1) return this.update(id, data[0], {dir: directory.dir}); // Catch and redirect single item array arguments
-            const doc = await fs.promises.open(`${trailingSlash(directory.dir)}${id}.json`, "r+"); // Open document with filehandle. r+ to throw an error if it doesn't exist.
-            var content = JSON.parse(await doc.readFile("utf8")); // Parsed! 
-      
-      if(content.length == 1) { // [ --ONE OBJECT ONLY-- ]
-        content = content[0]
-        data.forEach((entry) => { // Going through each object
-        // for(let i = 0; i < data.length; i++) {
-        //   let entry = data[i];
-        // }
-          if(entry.key === undefined || entry.change === undefined) throw new Error(`Unable to update "${id}.json". One or more Objects in the "data" argument are missing "key" and "change" values.`);
-           if(entry.change == "undefined") return delete (entry.child ? (content[entry.key])[entry.child] : content[entry.key]); // Deletes a key/child if the change is "undefined".
-            if(entry.child) { // [ CHILD KEY PRESENT ]
-              if(!content[entry.key] || !(content[entry.key])[entry.child]) { // No key/child exists. Creates one!
-                content[entry.key] = {};
-                 (content[entry.key])[entry.child] = BNS(entry.change) // Math checking isn't needed... It's a new key.
-              } else {
-                if((entry.math && isNaN((content[entry.key])[entry.child])) || (entry.math && isNaN(entry.change))) throw new Error(`Unable to update a key in "${id}.json". "math" is declared true but the target "key", "child", or "change" returned as NaN.`);
-                 (content[entry.key])[entry.child] = (entry.math ? (content[entry.key])[entry.child] + (entry.change) : BNS(entry.change));
-              }
-            } else { // [ KEY ONLY PRESENT ]
-              if(!content[entry.key]) { // No key exists. Creates one.
-                content[entry.key] = entry.change;
-              } else {
-                if((entry.math && isNaN(content[entry.key])) || (entry.math && isNaN(entry.change))) throw new Error(`Unable to update a key in "${id}.json". "math" is declared true but the target "key" or "change" returned as NaN.`);
-                 content[entry.key] = (entry.math ? (content[entry.key] + entry.change) : BNS(entry.change));
-              }
-            }
-        })
-        content = JSON.stringify([content])
-         await fs.promises.writeFile(`${trailingSlash(directory.dir)}${id}.json`, content);
-          this.feedback ? clog(`[.mupdate()] : Successfully made ${data.length} changes to "${id}.json".`) : "";
-          await doc.close();
-           return (this.parse ? JSON.parse : Buffer.from)(content);
-      } else if(content.length > 1) { // [ --TWO+ OBJECT ONLY-- ]
-        data.forEach(entry => {
-          let target = content.findIndex(obj => obj.hasOwnProperty(entry.key)); // "content" is still an ARRAY
-           if(target == -1) { // The key doesn't exist!
-            // If there isn't a child key needed, just creates the key. Otherwise, creates a child key.
-            // The key/child is created in the last Object in the Array.
-             return !entry.child ? (content[content.length-1])[entry.key] = entry.change : ((content[content.length-1])[entry.key] = {}) && (((content[content.length-1])[entry.key])[entry.child] = entry.change);
-           } else {
-             target = content[target]; // "target" is now the Object to change. Changes should be reflected back to "content".
-              if(entry.child) { // [ CHILD KEY PRESENT ] - (Everything from here is pretty much identical to single objects above)
-                if((entry.math && isNaN((target[entry.key])[entry.child])) || (entry.math && isNaN(entry.change))) throw new Error(`Unable to update a key in "${id}.json". "math" is declared true but the target "key", "child", or "change" returned as NaN.`);
-                 (target[entry.key])[entry.child] = (entry.math ? (target[entry.key])[entry.child] + (entry.change) : BNS(entry.change));
-              } else { // [ NO CHILD KEY PRESENT ]
-                if((entry.math && isNaN(target[entry.key])) || (entry.math && isNaN(entry.change))) throw new Error(`Unable to update a key in "${id}.json". "math" is declared true but the target "key" or "change" returned as NaN.`);
-                 target[entry.key] = (entry.math ? (target[entry.key] + entry.change) : BNS(entry.change));
-              }
-           }
-        })
-        content = JSON.stringify(content);
-         await fs.promises.writeFile(`${trailingSlash(directory.dir)}${id}.json`, content);
-          this.feedback ? clog(`[.mupdate()] : Successfully made ${data.length} changes to "${id}.json".`) : "";
-          await doc.close();
-           return (this.parse ? JSON.parse : Buffer.from)(content);
-      }
-      } catch(err) {
-        kill(this.kill, err.message, ".mupdate()");
-      }
-    }
 
-    /**
-     * @param {String} identifier
-     * @param {String} directory.dir
-     * @returns {Boolean}
-     */
-    async check(identifier, directory = {dir: this.path}) {
-      if(!identifier || !identifier instanceof String) throw new Error(`The "id" argument must be a String. Received "${typeof identifier}" instead.`);
-       try {
-        await fs.promises.stat(`${trailingSlash(directory.dir)}${identifier}.json`);
-         return true;
-       } catch(err) {
-        return false;
-       }
-    }
+# <ins>Constructor</ins>
+```js
+new Wasteful({feedback: false, log: false, path: `${__dirname}/info/`, serial: false, kill: false});
+```
+* **feedback** - Sends a confirmation via console when a function is executed successfully. (__default__: `false`)
+* **log** - Catalogs every time a function is executed or an error occurs, including the timestamp at which the event occurred. (__default__: `false`)
+  - A directory where the log file is stored can be specified by supplying an object with the keys `enable`, a Boolean, and `dir`, a string containing your directory path. (__example__: `{enable: true, dir: "./data/"}`)
+* **path** - Provide a custom path where you wish JSON files to be written/read. (__default__: `./wastefuldb/data/`)
+* **serial** - Automatically assigns filenames/identifiers based on the size of the set path/directory. (__default__: `false`)
+* **kill** - When set to true, the process will be kill when an error occurs in a try/catch statement. (__defualt__: `false`)
 
-}
 
-module.exports = AsyncWastefulDB;
+# <ins>Specifying Directories</ins>
+<b>Every function is capable of interacting with specific directories outside the "path" constructor option when specified within the {dir} option.</b>
+```js
+db.find({id: "1234"}, {dir: `${__dirname}/patrons/`});
+
+db.insert({id: "5545", name: "Sherry", pass: "BB822", active: false}, {dir: `${__dirname}/accounts/`});
+```
+* dir - A directory's specific address to search, insert, and update in.
+
+
+# <ins>Functions</ins>
+
+## .insert()
+<b>Insert a file with as many variables as you wish. __Always__ include an "id" variable if serial is set to *false* as that is what is use to read the JSON document in most cases.</b>
+```js
+db.insert({id: "1234", name: "seth", pass: "xyz"});
+```
+* id - The name of the file and what will be used in the .find() function
+
+
+## .insertBulk([Array of Objects])
+<b>Insert a file with multiple Objects within an Array.</b>
+```js
+db.insertBulk( [{id: "5545"}, {first: "Sully", last: "V."}, {password: "password"}] );
+```
+
+
+## .find(id)
+<b>Provides the information of the specified file with the matching identifier.</b>
+```js
+let info = db.find({id: "1234"});
+console.log(info);
+```
+* id - The identifier of the file to find and display the information of.
+
+
+## .findMore([data])
+<b>Retrieves and parses multiple documents and returns them in an array. If a document isn't found, `-1` will take its place.</b>
+```js
+db.findMore(["1234", "2", "5678"], {dir: `${__dirname}/data/`});
+```
+* data - An array of document identifiers to search for.
+
+
+## .get(id, dir?, (callback))
+<b>Unlike `db.find`, this function will open each JSON document in the given directory in order to locate the identifier within the document rather than locating the document name.</b>
+```js
+db.get("1234", {dir: "./data/"}, (result) => { console.log(result); });
+
+db.get({id: 5}, (result) => { console.log(result); });
+```
+* id - The internal identifier of a file.
+* dir? - A specific directory to search in.
+* (callback) - The callback argument which will return the data contained within the given document, or returns `-1` if the document isn't found.
+
+
+## .append({id, key, value, position?})
+<b>Append a new key and value to a document's data. If the document's data is an array of objects, provide a 'position' argument to pick which object to append to.</b>
+```js
+db.append({id: "2", key: "food", value: "leaves"});
+db.append({id: "5", key: "person", value: "true", position: 0});
+```
+* id - The identifier of the file to append to.
+* key - The name of the new key to append to an object.
+* value - The content of the given key.
+* position - Which object in an array of objects should the new key be appended to? (Defaults to the first object.)
+
+
+## .update({id, key, change, math?})
+<b>Searches the given or specified directory for the given ID and updates the given "key" with your "change". Set math to true for __simple__ math. Set the change to "undefined" to delete the specified key. A key which doesn't exist will be added automatically. Not recommended when serialization is enabled.</b>
+```js
+db.update({id: "1234", key: "id", change: "4321", math: false});
+```
+* id - The name/id of the file to update
+* key - What key of the file you want to update
+* change - What change you want to make to it
+* math? - Does the change require (simple) math?
+
+
+## .update() (with child value)
+<b>Declaring a "child" key will update an object within another object aka nested objects. Everything else is the same.</b>
+```js
+db.update({id: "5", key: "name", child: "last", change: "A."});
+```
+
+
+## .mupdate(id, [Array of Objects])
+<b>Update multiple objects within a single document. A good alternative to `.update()` for several changes in a single document.</b>
+```js
+db.mupdate("5", [ {key: "balance", change: -34, math: true}, {key: "name", child: "middle", change: "A."} ])
+```
+* id - The identifier of the file to update
+* "Array of Objects" - An array containing several, properly formatted objects to update the specified document.
+
+
+## .collect({id?, key?, value?})
+<b>Reads, parses, then pushes information from each JSON file into one collection. Provide an id or key & value to filter results.</b>
+```js
+let data = db.collect();
+data.forEach(info => {
+  if(info.active == true) {
+    console.log(info);
+  } else {
+    return;
+  }
+})
+```
+
+
+## .replicate(id, {to?, from?, force?})
+<b>Create a copy of a specified document from a given directory and place it within the given destination directory. Only one file can exist in a directory at a time.</b>
+```js
+db.replicate("1234", {to: __dirname, from: `${__dirname}/data/`);
+db.replicate("1234", {force: true});
+```
+* id - The identifier of the file which is going to be replicated.
+* to - What directory to place the replicated file. (__default__: `constructor.path`)
+* from - Which directory to find the file which is being replicated. (__default__: `constructor.path`)
+* force - Forces the function to replicate the file within the same directory. The file will have a suffix of "\_rep". (__default__: `false`)
+
+
+## .set(id, {data}, {dir});
+<b>Overwrite a document completely, replacing the document data with the new data provided. The previous data is temporarily stored in a cache.</b>
+```js
+db.set("1234", {name: "Seth R. Richardson", balance: 1000, insured: true}, {dir: __dirname});
+```
+* id - The identifier of the document to be overwritten.
+* data - The new data to be written in the document.
+* dir - A directory which contains the document to be updated.
+
+
+## .undo();
+<b>Undo the most recent update to a document. The cache holding the most recent change will be cleared if your program session ends.</b>
+```js
+db.undo();
+```
+
+
+# <ins>Update Notes</ins>
+**AsyncWastefulDB**
+- Fixed .update() not creating keys and child keys that are missing.
+- Fixed an error being thrown while trying to delete keys of multi-object documents using .update().
+- Added a new optional parameter to .update()! Specify a "position" to decide where a non-existent key/child should be created.
+  - The internal name for the optional parameters was changed from "directory" to "options".
+  - So programs flow better, the "position" option will NOT throw errors if the value is greater or less than the size of an array.
+
+<div style="text-align: right"> v1.6.7 </div>
